@@ -628,3 +628,12 @@
 .thesis__icon { flex-shrink: 0; color: var(--c-brand); margin-top: 3px; }
 
 .divider { height: 1px; background: var(--c-border); border: none; margin: 0; }
+
+/* ---- A/B/C 三組對照 (提案 §12.1) ----
+   三欄的內容量天差地遠（C 組多了攔截面板、規則與主張級來源），
+   grid 預設 stretch 會讓 A、B 卡片底部留下大片空白。
+   改為 align-items:start，讓每張卡片自然收合到內容高度；
+   「稽核編號」列的 margin-top:auto 也隨之失效，因此改用固定間距。 */
+.armgrid { align-items: start; }
+.armgrid .legend__item { height: auto; }
+.armgrid .arm__foot { margin-top: var(--sp-3) !important; }

@@ -28,7 +28,9 @@ from ..models import (
     VetSearchRequest,
     VetSearchResponse,
 )
+from ..llm.client import llm_status
 from ..store.audit import get_store
+from .compare import FLAGSHIP_QUESTION, run_comparison
 from .service import get_service
 
 router = APIRouter(prefix="/api")
@@ -92,7 +94,10 @@ def health() -> Dict[str, Any]:
         "knowledge_source": kb.stats["source"],
         "product_count": kb.stats["product_count"],
         "as_of": kb.stats["as_of"],
+        # LLM 只出現在「症狀結構化」與「衛教語言轉譯」兩處（提案 §7.1）；
+        # 閘門決策路徑永遠不呼叫 LLM，故此旗標恆為 False。
         "llm_in_gate_path": False,
+        "llm": llm_status(),
     }
 
 
@@ -119,6 +124,31 @@ def stats() -> Dict[str, Any]:
             "note": "來源未標示 (已失效)，僅能以民國日期換算後與 as-of 比較才判定過期。",
         },
     }
+
+
+# --------------------------------------------------------------------------
+# A/B/C 三組對照 (提案 §12.1)
+# --------------------------------------------------------------------------
+class CompareRequest(BaseModel):
+    """以同一輸入跑 A（一般 LLM）／B（單純 RAG）／C（VetLink AI）三組。"""
+
+    question_zh: str = FLAGSHIP_QUESTION
+    species: Optional[str] = "cat"
+    can_urinate: Optional[bool] = False
+
+
+@router.post("/compare")
+def compare(payload: CompareRequest = Body(default=CompareRequest())) -> Dict[str, Any]:
+    """三組對照。
+
+    A、B 為對照組，其輸出不代表本系統建議；無 API 金鑰時回傳**預錄範例**並明確標示。
+    C 組永遠走確定性 Evidence Gate，不呼叫 LLM。
+    """
+    return run_comparison(
+        payload.question_zh,
+        species=payload.species,
+        can_urinate=payload.can_urinate,
+    )
 
 
 # --------------------------------------------------------------------------

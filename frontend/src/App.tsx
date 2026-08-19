@@ -5,6 +5,7 @@ import { USE_MOCKS, getLastSource, health, type DataSource } from './lib/api'
 import { StateLegend, StateBadge } from './components/StateVisuals'
 import { Thesis, SectionTitle, Note } from './components/Common'
 import { DATASET_FACTS } from './mocks'
+import { Compare } from './acts/Compare'
 import { Act1 } from './acts/Act1'
 import { Act2 } from './acts/Act2'
 import { Act3 } from './acts/Act3'
@@ -12,7 +13,7 @@ import { AmberAct } from './acts/AmberAct'
 import { IconShield, IconArrowRight, IconTarget, IconStop, IconRefresh, IconCheck } from './components/Icons'
 
 /** 導覽分頁 */
-type ViewId = 'overview' | 'act1' | 'amber' | 'act2' | 'act3'
+type ViewId = 'overview' | 'compare' | 'act1' | 'amber' | 'act2' | 'act3'
 
 interface ViewDef {
   id: ViewId
@@ -24,6 +25,7 @@ interface ViewDef {
 
 const VIEWS: ViewDef[] = [
   { id: 'overview', kicker: 'OVERVIEW', label: '四種狀態總覽', role: 'owner' },
+  { id: 'compare', kicker: 'ACT 0 · COMPARE', label: '對照組｜A / B / C 三組同輸入', role: 'owner' },
   { id: 'act1', kicker: 'ACT 1 · RED', label: '第一幕｜系統拒絕用藥要求', role: 'owner' },
   { id: 'amber', kicker: 'STATE · AMBER', label: '黃色｜資訊不足時的追問', role: 'owner' },
   { id: 'act2', kicker: 'ACT 2 · BLUE', label: '第二幕｜同案例、不同角色', role: 'vet' },
@@ -85,6 +87,7 @@ export function App() {
           }} />
 
           {view === 'overview' && <Overview onStart={() => go('act1')} />}
+          {view === 'compare' && <Compare />}
           {view === 'act1' && <Act1 onNext={() => go('act2')} />}
           {view === 'amber' && <AmberAct />}
           {view === 'act2' && <Act2 onNext={() => go('act3')} />}

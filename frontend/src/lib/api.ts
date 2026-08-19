@@ -7,8 +7,11 @@
  * live 模式下若後端無回應，會自動退回 mock 並在 UI 標示，
  * 確保 Demo 在任何情況下都不會開天窗。
  */
-import type { ConsultResponse, VetSearchResponse, ImpactReplayResponse, AnswerPassport } from './types'
-import { ACT1_CONSULT, ACT2_VET_SEARCH, ACT3_IMPACT_REPLAY, AMBER_CONSULT } from '../mocks'
+import type {
+  ConsultResponse, VetSearchResponse, ImpactReplayResponse, AnswerPassport,
+  CompareResponse, CompareArm, CompareCitation, CompareDimension, CompareDimensionKey, GateState,
+} from './types'
+import { ACT1_CONSULT, ACT2_VET_SEARCH, ACT3_IMPACT_REPLAY, AMBER_CONSULT, COMPARE_FIXTURE, COMPARE_QUESTION } from '../mocks'
 
 /**
  * 後端 (FastAPI) 以 "YELLOW" 表示「資訊不足」狀態，
@@ -312,6 +315,63 @@ export function impactReplay(payload: { doc_id: string; new_version: string }): 
   return withFallback(
     () => request<ImpactReplayResponse>('/api/admin/impact-replay', { method: 'POST', body: JSON.stringify(payload) }),
     ACT3_IMPACT_REPLAY,
+  )
+}
+
+/* ------------------------------------------------------------------ *
+ * A/B/C 三組對照 (提案 §12.1)
+ *
+ * 後端 /api/compare 的形狀已直接對齊 UI，僅需補上缺漏欄位的預設值，
+ * 避免任何一組 arm 缺 dimensions 時 UI 崩潰。
+ * 沿用既有轉接層慣例：不改動既有 adapter，另立一個。
+ * ------------------------------------------------------------------ */
+
+const EMPTY_DIM = (label_zh: string): CompareDimension => ({
+  value: false, label_zh, good: false, detail_zh: '—',
+})
+
+/** 補齊後端可能缺漏的欄位，確保 UI 永遠拿得到四個維度 */
+function adaptCompare(raw: Record<string, unknown>, fallback: CompareResponse): CompareResponse {
+  if (!raw || typeof raw !== 'object' || !Array.isArray(raw.arms)) return fallback
+
+  const arms = (raw.arms as Record<string, unknown>[]).map((a): CompareArm => {
+    const dims = (a.dimensions ?? {}) as Record<string, CompareDimension>
+    return {
+      ...(a as unknown as CompareArm),
+      // 後端 C 組回 "RED"/"YELLOW"…；統一正規化為前端四值
+      gate_state: a.gate_state ? (normalizeGateState(a.gate_state) as GateState) : null,
+      citations: Array.isArray(a.citations) ? (a.citations as CompareCitation[]) : [],
+      policy_violations: Array.isArray(a.policy_violations) ? (a.policy_violations as string[]) : [],
+      dimensions: {
+        gives_dosage: dims.gives_dosage ?? EMPTY_DIM('是否提供劑量'),
+        has_sources: dims.has_sources ?? EMPTY_DIM('是否有來源'),
+        auditable: dims.auditable ?? EMPTY_DIM('是否可稽核'),
+        blocks_emergency: dims.blocks_emergency ?? EMPTY_DIM('是否攔截急症'),
+      },
+    }
+  })
+
+  return {
+    ...fallback,
+    ...(raw as unknown as CompareResponse),
+    arms,
+    dimension_order: (Array.isArray(raw.dimension_order) && raw.dimension_order.length
+      ? raw.dimension_order
+      : fallback.dimension_order) as CompareDimensionKey[],
+  }
+}
+
+/** POST /api/compare — A（一般 LLM）／B（單純 RAG）／C（VetLink AI）同輸入對照 */
+export function compare(payload?: { question_zh?: string }): Promise<CompareResponse> {
+  return withFallback(
+    async () => {
+      const raw = await request<Record<string, unknown>>('/api/compare', {
+        method: 'POST',
+        body: JSON.stringify({ question_zh: payload?.question_zh ?? COMPARE_QUESTION }),
+      })
+      return adaptCompare(raw, COMPARE_FIXTURE)
+    },
+    COMPARE_FIXTURE,
   )
 }
 

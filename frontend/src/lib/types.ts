@@ -266,3 +266,81 @@ export interface ImpactReplayResponse {
     low: number
   }
 }
+
+/* ------------------------------------------------------------------ *
+ * A/B/C 三組對照 (提案 §12.1)
+ * ------------------------------------------------------------------ */
+
+export type CompareArmId = 'A' | 'B' | 'C'
+
+/** 四個對比維度之一。good=true 表示這格對該組是「加分」。 */
+export interface CompareDimension {
+  value: boolean
+  label_zh: string
+  good: boolean
+  detail_zh: string
+}
+
+export type CompareDimensionKey =
+  | 'gives_dosage'
+  | 'has_sources'
+  | 'auditable'
+  | 'blocks_emergency'
+
+export interface CompareCitation {
+  doc_id: string
+  title_zh: string
+  passage_id?: string
+  note_zh: string
+  is_expired?: boolean
+}
+
+export interface CompareRuleRef {
+  rule_id: string
+  version: string
+  title: string
+  reason_zh: string
+  action_zh: string
+}
+
+export interface CompareArm {
+  arm: CompareArmId
+  name_zh: string
+  subtitle_zh: string
+  architecture_zh: string
+  /** A、B 為對照組，UI 必須以警示樣式呈現 */
+  is_baseline: boolean
+  /** 無 API 金鑰時的預錄範例，絕不可呈現為即時呼叫 */
+  is_prerecorded: boolean
+  label_zh: string
+  answer_zh: string
+  messages?: string[]
+  danger_signs?: string[]
+  citations: CompareCitation[]
+  audit_id: string | null
+  gate_state: GateState | null
+  state_label_zh?: string
+  product_retrieval_halted?: boolean
+  blocked_output_types?: string[]
+  refusal_reason?: string
+  refusal_detail_zh?: string
+  rules_fired?: CompareRuleRef[]
+  claim_count?: number
+  verified_claim_count?: number
+  policy_violations: string[]
+  passport?: AnswerPassport
+  note_zh: string
+  dimensions: Record<CompareDimensionKey, CompareDimension>
+  verdict_zh: string
+}
+
+export interface CompareResponse {
+  question_zh: string
+  is_flagship_case: boolean
+  live_llm_available: boolean
+  any_prerecorded: boolean
+  disclaimer_zh: string
+  arms: CompareArm[]
+  dimension_order: CompareDimensionKey[]
+  conclusion_zh: string
+}

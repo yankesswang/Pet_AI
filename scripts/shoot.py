@@ -5,7 +5,7 @@ import websocket
 URL = os.environ.get("SHOOT_URL", "http://localhost:5173/")
 OUT = os.environ.get("SHOOT_OUT", "/home/trx50/Project/Pet_AI/docs/screenshots")
 PORT = 9222
-VIEWS = [("overview","00_overview"),("act1","01_act1_red"),("amber","02_amber"),
+VIEWS = [("compare","05_compare"),("overview","00_overview"),("act1","01_act1_red"),("amber","02_amber"),
          ("act2","03_act2_blue"),("act3","04_act3_replay")]
 
 chrome = shutil.which("google-chrome") or shutil.which("chromium-browser")
@@ -46,7 +46,7 @@ for vid, name in VIEWS:
     # 點擊對應分頁：以按鈕文字比對 VIEWS 的 kicker
     clicked = js(f"""(() => {{
         const btns=[...document.querySelectorAll('button,a,[role=tab]')];
-        const map={{overview:'四種狀態總覽',act1:'系統拒絕用藥要求',amber:'資訊不足時的追問',
+        const map={{compare:'對照',overview:'四種狀態總覽',act1:'系統拒絕用藥要求',amber:'資訊不足時的追問',
                    act2:'同案例、不同角色',act3:'仿單更新追回舊回答'}};
         const t=map['{vid}'];
         const b=btns.find(x=>(x.textContent||'').includes(t));

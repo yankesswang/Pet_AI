@@ -200,7 +200,8 @@ curl -X POST http://127.0.0.1:2222/api/admin/impact-replay \
 - 「與獸醫風險分級一致率」需兩名以上獸醫共識標註，**無法由自動化評測產生**，
   故不輸出數字。
 - 本評測為 **C 組（VetLink AI）單組結果**；提案 §12.1 的 A 組（一般 LLM）與
-  B 組（單純 RAG）對照需另行執行。
+  B 組（單純 RAG）對照由 `POST /api/compare` 提供（見下方「A/B/C 三組對照」）。
+  該端點為**逐案例的質性對照展示**，不產生統計指標；上表數字仍只涵蓋 C 組。
 - 規則包狀態為 `pending_vet_signoff`。
 - 上述數字量測的是**系統是否做出正確的安全決策**（狀態、拒答、輸出型別、
   引用綁定），不是自然語言品質。
@@ -216,3 +217,131 @@ curl -X POST http://127.0.0.1:2222/api/admin/impact-replay \
 - **角色政策以輸出白名單實作**，而非對模型下指令；飼主端另有文字層違規掃描
   作為最終防線。
 - 規則是資料（`app/rules/*.yaml`），新增規則不需改程式碼。
+
+---
+
+## LLM 接入（選用）與安全邊界
+
+系統**預設完全不呼叫 LLM**，行為與本文件其餘章節所述一致。以下為選用的接入方式。
+
+### 安全邊界：LLM 只被允許出現在兩個位置
+
+提案 §7.1 明確界定哪些模組可以由 LLM 決定。實作嚴格遵守：
+
+| 模組 | LLM 可否介入 | 實作位置 |
+| --- | :---: | --- |
+| 症狀結構化器 | **可**（需 Schema 驗證） | `app/llm/structurer_llm.py` |
+| 衛教語言轉譯 | **可**（限白名單段落） | `app/llm/translator_llm.py` |
+| 必要追問引擎 | 否 | `app/engine/state.py` |
+| 紅旗規則引擎 | 否 | `app/engine/rules.py` |
+| 角色政策引擎 | 否 | `app/engine/policy.py` |
+| 文件效期閘門 | 否 | `app/engine/knowledge.py` |
+| 主張驗證器 | 否 | `app/engine/claim_verifier.py` |
+| 稽核與回溯引擎 | 否 | `app/engine/impact_replay.py` |
+
+> **閘門決策路徑（RED／YELLOW／GREEN／BLUE 的判定）永遠是確定性的。**
+> `GET /api/health` 的 `llm_in_gate_path` 恆為 `false`，且不受任何環境變數影響。
+> LLM 無法決定狀態、無法評估規則、無法驗證主張、無法判定效期。
+
+### 環境變數
+
+```bash
+export OPENAI_API_KEY="sk-..."          # 未設定 → 整個 LLM 層停用，系統照常運作
+export OPENAI_MODEL="gpt-4o-mini"       # 選用，預設 gpt-4o-mini
+export OPENAI_BASE_URL="..."            # 選用，自架或代理端點
+export VETLINK_LLM_TIMEOUT=10           # 選用，單次呼叫逾時秒數，預設 10
+
+export VETLINK_LLM_STRUCTURING=on       # 症狀結構化改用 LLM 輔助（預設 off）
+export VETLINK_LLM_TRANSLATION=on       # 衛教語言轉譯改用 LLM（預設 off）
+```
+
+兩個旗標**預設皆為 off**，因此未設定時所有既有測試與評測結果不變。
+
+確認目前狀態：
+
+```bash
+curl -s http://127.0.0.1:2222/api/health | python -m json.tool
+```
+
+```json
+{
+  "llm_in_gate_path": false,
+  "llm": {
+    "enabled": false, "model": "gpt-4o-mini",
+    "structuring": "off", "translation": "off", "key_present": false
+  }
+}
+```
+
+### 1. 症狀結構化器（`VETLINK_LLM_STRUCTURING=on`）
+
+```
+自然語言 → [LLM 抽取] → Pydantic Schema 驗證 → 與詞典結果安全合併 → facts
+                                                                    ↓
+                                                    Evidence Gate（確定性）
+```
+
+* LLM 輸出必須通過 `LLMStructuredSymptoms`（`extra="forbid"`，列舉值與數值範圍皆檢查）。
+  任一欄位不合法 → **整份結果作廢**，退回純詞典結果。
+* `symptoms` 只接受詞典既有的正規名稱。模型自創的症狀名會被丟棄 ——
+  否則等於讓模型有機會繞過規則比對。
+* 合併規則為**安全優先**：
+  * 詞典命中的症狀一律保留，LLM 只能新增。
+  * 純數值欄位只在詞典缺值時補齊，不覆寫。
+  * 紅旗相關欄位衝突時**取較危險的值**
+    （如詞典判 `can_urinate=False`、LLM 判 `True` → 取 `False`）。
+  * `mentation` 衝突時取較嚴重者。
+* 請求中明確給定的欄位（如 `species`）永遠優先於任何抽取結果。
+
+### 2. 衛教語言轉譯（`VETLINK_LLM_TRANSLATION=on`）
+
+```
+已核准段落（白名單） → [LLM 改寫] → 主張驗證器 → 角色政策掃描 → 輸出
+                                        ↓ 任一關失敗
+                                     退回原始段落
+```
+
+* 輸入**只能**是已通過效期與審核閘門的段落原文；過期或未審核的段落直接拒絕改寫。
+* 改寫後仍須通過詞彙涵蓋度檢查（門檻 0.60，高於主張驗證器預設的 0.55）——
+  模型若加入來源沒有的內容，涵蓋度會掉下來，該段改寫即被丟棄。
+* 再經 `policy.redact` 掃描角色違規（劑量／購買／確診／停換藥／人藥套用）。
+* 任何一關失敗 → 回傳原文，行為與未啟用時相同。
+
+### 優雅降級
+
+`app/llm/client.py` 的所有公開方法**永不向請求路徑拋出例外**。
+無金鑰、逾時、API 錯誤、輸出無法解析 → 一律回傳 `None`，由呼叫端退回既有確定性路徑。
+逾時預設 10 秒、重試 1 次。
+
+---
+
+## A/B/C 三組對照（提案 §12.1）
+
+```bash
+curl -s -X POST http://127.0.0.1:2222/api/compare \
+     -H 'Content-Type: application/json' -d '{}'
+```
+
+以**同一輸入**跑三組架構（預設為提案 §十 第一幕旗艦案例）：
+
+| 組別 | 架構 | 實作 |
+| --- | --- | --- |
+| **A** | 使用者輸入 → LLM → 輸出 | 無閘門、無來源、無角色政策 |
+| **B** | 使用者輸入 → 檢索 → LLM → 輸出 | 有文件級來源，但無閘門／角色政策／主張驗證 |
+| **C** | 使用者輸入 → 結構化 → Evidence Gate → 白名單輸出 → 主張驗證 → 回答護照 | 完整系統 |
+
+四個對比維度：`是否提供劑量` / `是否有來源` / `是否可稽核` / `是否攔截急症`。
+
+> **A、B 組的「是否提供劑量」是由本系統既有的 `policy.scan_text_for_violations`
+> 實際掃出來的，不是人工標註。** 同一支掃描器也套用在 C 組，結果為零違規。
+
+### 無 API 金鑰時的誠實標示
+
+沒有 `OPENAI_API_KEY` 時，A、B 兩組回傳**預錄範例**，並在回應中明確標示：
+
+```json
+{ "is_prerecorded": true, "label_zh": "預錄範例（示範用）" }
+```
+
+前端據此以警示樣式呈現。**預錄內容絕不會被呈現為即時模型呼叫的結果。**
+C 組永遠是即時的確定性閘門判定，不受金鑰有無影響。

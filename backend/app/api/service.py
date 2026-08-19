@@ -18,6 +18,7 @@ from ..engine.passport import build_passport, new_audit_id
 from ..engine.rules import Rule, RuleEngine, get_rule_engine
 from ..engine.state import EvidenceGate, GateContext, GateDecision, get_gate
 from ..engine.structurer import structure_case
+from ..llm.structurer_llm import structure_case_llm
 from ..models import (
     STATE_LABELS_ZH,
     AnswerPassport,
@@ -86,7 +87,9 @@ class ConsultService:
         owner_authorized: bool = False,
         requested_mode: Optional[str] = None,
     ) -> ConsultResponse:
-        facts = structure_case(req)
+        # 症狀結構化：旗標關閉（預設）時等同 structure_case；
+        # 開啟時 LLM 抽取結果須先通過 Schema 驗證與安全合併，才會進入閘門。
+        facts = structure_case_llm(req)
 
         # 1) 先取得候選來源與主張 —— 證據資格檢查需要它們
         candidate_passages = self._candidate_passages(facts)
