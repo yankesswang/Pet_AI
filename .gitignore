@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+
+# Node
+node_modules/
+dist/
+.vite/
+
+# Data (large fetched/derived artifacts - regenerate via data/*.py)
+data/raw/*.json
+!data/raw/.gitkeep
+data/raw/.pages/
+data/processed/*.json
+!data/processed/.gitkeep
+# NOTE: backend/app/data/demo_products.json IS committed (small curated demo subset)
+
+# Local
+.env
+.env.local
+*.db
+*.sqlite3
+audit_log.jsonl
+
+# OS/editor
+.DS_Store
+.idea/
+.vscode/
