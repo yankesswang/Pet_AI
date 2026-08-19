@@ -216,3 +216,12 @@ main { flex: 1; padding: var(--sp-8) 0 var(--sp-16); }
 .btn--state:hover { filter: brightness(1.12); }
 .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 .btn--lg { min-height: 54px; font-size: var(--t-base); padding: var(--sp-3) var(--sp-6); }
+
+/* LIVE 實際使用分頁 — 視覺上與劇本式 demo 分頁區隔，標示這是產品本身 */
+.actnav__btn--live { border-right: 1px solid var(--c-border); }
+.actnav__btn--live .actnav__kicker { color: var(--s-green); }
+.actnav__btn--live[aria-current='true'] {
+  border-bottom-color: var(--s-green);
+  background: var(--s-green-bg);
+}
+.actnav__btn--live[aria-current='true'] .actnav__kicker { color: var(--s-green); }

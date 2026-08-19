@@ -6,3 +6,6 @@ dist
 
 # Vite 暫存檔
 vite.config.ts.timestamp-*.mjs
+
+# TS 建置快取
+*.tsbuildinfo

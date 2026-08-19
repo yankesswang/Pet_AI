@@ -10,6 +10,7 @@
 import type {
   ConsultResponse, VetSearchResponse, ImpactReplayResponse, AnswerPassport,
   CompareResponse, CompareArm, CompareCitation, CompareDimension, CompareDimensionKey, GateState,
+  FollowUpQuestion,
 } from './types'
 import { ACT1_CONSULT, ACT2_VET_SEARCH, ACT3_IMPACT_REPLAY, AMBER_CONSULT, COMPARE_FIXTURE, COMPARE_QUESTION } from '../mocks'
 
@@ -186,14 +187,19 @@ function adaptPassport(raw: Record<string, unknown> | undefined, fallback: unkno
         last_reviewed_at_iso: d.last_reviewed_at,
       }),
     ),
-    // 後端把段落內嵌在各 claim 底下；UI 需要一份攤平的 passages 供點擊溯源
-    passages: (Array.isArray(raw.claim_bindings) ? raw.claim_bindings : [])
-      .flatMap((c: Record<string, unknown>) => (Array.isArray(c.passages) ? c.passages : []))
-      .map((x: Record<string, unknown>) => ({ ...x, doc_title_zh: x.doc_title_zh ?? x.doc_id }))
-      .filter(
-        (x: Record<string, unknown>, i: number, arr: Record<string, unknown>[]) =>
-          arr.findIndex((y) => y.passage_id === x.passage_id) === i,
-      ),
+    // 後端把段落內嵌在各 claim 底下；UI 需要一份攤平的 passages 供點擊溯源。
+    // 注意：AnswerPassport.passages 的型別是 Record<passage_id, SourcePassage>，
+    // ClaimButton 以 passages[id] 查表。先前此處產生的是「陣列」，
+    // 導致查表永遠 undefined，每一項主張都被誤標為「未比對到支持段落」——
+    // 在安全相關介面上這是與事實完全相反的顯示，因此改為以 passage_id 建索引。
+    passages: Object.fromEntries(
+      (Array.isArray(raw.claim_bindings) ? raw.claim_bindings : [])
+        .flatMap((c: Record<string, unknown>) => (Array.isArray(c.passages) ? c.passages : []))
+        .map((x: Record<string, unknown>) => [
+          x.passage_id,
+          { ...x, doc_title_zh: x.doc_title_zh ?? x.doc_id },
+        ]),
+    ),
     applicable_roles: raw.applicable_role ? [raw.applicable_role] : (fb.applicable_roles ?? []),
     created_at_iso: (raw.created_at as string) ?? fb.created_at_iso,
     refusal_detail_zh: (raw.refusal_detail as string) ?? fb.refusal_detail_zh,
@@ -383,5 +389,106 @@ export async function health(): Promise<{ ok: boolean }> {
     return { ok: true }
   } catch {
     return { ok: false }
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * 實際使用頁（LIVE）— 真實飼主提問路徑
+ *
+ * 與上方 demo 用的 consult() 的關鍵差異：
+ *   1. 不硬編 species / can_urinate，使用者填什麼就送什麼；
+ *   2. **絕不退回 mock**。此頁的承諾是「你看到的答案就是後端真的回的」，
+ *      靜默用罐頭資料冒充真實回應會直接違反這個承諾，
+ *      因此後端不通時一律拋錯，由 UI 明確告知使用者。
+ * ------------------------------------------------------------------ */
+
+/** 送給 /api/consult 的結構化欄位（皆為選填，未填即不送出） */
+export interface ConsultFields {
+  species?: 'cat' | 'dog'
+  body_weight_kg?: number
+  age_months?: number
+  sex?: string
+  duration_hours?: number
+  severity?: string
+  /** 後端要求陣列；送字串會 422 */
+  current_medications?: string[]
+  can_urinate?: boolean
+  vomiting?: boolean
+  mentation?: 'normal' | 'lethargic' | 'collapsed' | 'unknown'
+  breathing_effort?: string
+  mucous_membrane_color?: string
+  temperature_c?: number
+  vomit_count_24h?: number
+  can_keep_water?: boolean
+}
+
+/** 後端 required_questions[{field,question}] → UI FollowUpQuestion */
+function adaptRequiredQuestions(raw: unknown): FollowUpQuestion[] {
+  if (!Array.isArray(raw)) return []
+  return (raw as Record<string, unknown>[]).map((q) => ({
+    field: String(q.field ?? ''),
+    question_zh: String(q.question ?? q.question_zh ?? ''),
+    required: true,
+  }))
+}
+
+/**
+ * 不依賴任何 fixture 的 consult 轉接。
+ * adaptConsult / adaptPassport 需要 fallback 物件來補齊 UI 欄位，
+ * 這裡改以「空骨架」代替 mock，確保畫面上每一個字都來自後端。
+ */
+const LIVE_SKELETON = {
+  gate_state: 'AMBER',
+  headline_zh: '',
+  content_blocks: [],
+  passport: {
+    audit_id: '', gate_state: 'AMBER', applicable_roles: [], rules: [], claims: [],
+    passages: {}, documents: [], scope_zh: [], product_retrieval_halted: false,
+    created_at_iso: '',
+  },
+} as unknown as ConsultResponse
+
+/**
+ * POST /api/consult — 真實飼主提問（LIVE ONLY，無 mock 備援）。
+ * @throws 後端無回應或非 2xx 時直接拋出，呼叫端必須把錯誤顯示給使用者。
+ */
+export async function consultFree(
+  text: string,
+  fields: ConsultFields = {},
+): Promise<ConsultResponse> {
+  const body: Record<string, unknown> = { text, role: 'owner' }
+  // 只送出真的有值的欄位；undefined / '' / NaN 一律略過，
+  // 讓後端維持「缺值 → 黃色追問」的判定，而不是被空字串誤導。
+  for (const [k, v] of Object.entries(fields)) {
+    if (v === undefined || v === null) continue
+    if (typeof v === 'string' && v.trim() === '') continue
+    if (typeof v === 'number' && Number.isNaN(v)) continue
+    body[k] = v
+  }
+
+  const raw = await request<Record<string, unknown>>('/api/consult', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  })
+  lastSource = 'live'
+
+  const adapted = adaptConsult(raw, LIVE_SKELETON)
+  return {
+    ...adapted,
+    follow_up_questions: adaptRequiredQuestions(raw.required_questions),
+    // 後端未提供醫院名冊；此頁寧可不顯示，也不借用 fixtures 的示範醫院
+    // 冒充「附近的真實急診醫院」（提案 §5.1 要求僅顯示經確認的營業資訊）。
+    emergency_referral: undefined,
+    timeline: [],
+  }
+}
+
+/** 供 LIVE 頁使用的健康檢查 — 不受 VITE_USE_MOCKS 影響，永遠真的打後端 */
+export async function healthLive(): Promise<{ ok: boolean; detail?: string }> {
+  try {
+    const h = await request<Record<string, unknown>>('/api/health')
+    return { ok: true, detail: String(h.rules_bundle_version ?? '') }
+  } catch (e) {
+    return { ok: false, detail: e instanceof Error ? e.message : String(e) }
   }
 }

@@ -10,10 +10,11 @@ import { Act1 } from './acts/Act1'
 import { Act2 } from './acts/Act2'
 import { Act3 } from './acts/Act3'
 import { AmberAct } from './acts/AmberAct'
+import { LiveAsk } from './acts/LiveAsk'
 import { IconShield, IconArrowRight, IconTarget, IconStop, IconRefresh, IconCheck } from './components/Icons'
 
 /** 導覽分頁 */
-type ViewId = 'overview' | 'compare' | 'act1' | 'amber' | 'act2' | 'act3'
+type ViewId = 'live' | 'overview' | 'compare' | 'act1' | 'amber' | 'act2' | 'act3'
 
 interface ViewDef {
   id: ViewId
@@ -24,6 +25,9 @@ interface ViewDef {
 }
 
 const VIEWS: ViewDef[] = [
+  // 實際使用頁放在第一個：這是唯一一頁使用者可以真的自己提問的地方，
+  // 其餘分頁都是為評審設計的固定劇本導覽。
+  { id: 'live', kicker: 'LIVE · 實際使用', label: '我要提問｜真實提問與判定', role: 'owner' },
   { id: 'overview', kicker: 'OVERVIEW', label: '四種狀態總覽', role: 'owner' },
   { id: 'compare', kicker: 'ACT 0 · COMPARE', label: '對照組｜A / B / C 三組同輸入', role: 'owner' },
   { id: 'act1', kicker: 'ACT 1 · RED', label: '第一幕｜系統拒絕用藥要求', role: 'owner' },
@@ -33,7 +37,7 @@ const VIEWS: ViewDef[] = [
 ]
 
 export function App() {
-  const [view, setView] = useState<ViewId>('overview')
+  const [view, setView] = useState<ViewId>('live')
   const [source, setSource] = useState<DataSource>(USE_MOCKS ? 'mock' : 'live')
 
   /** live 模式下確認後端是否真的活著，供頂欄標示 */
@@ -60,7 +64,7 @@ export function App() {
 
   return (
     <div className="app">
-      <TopBar source={source} />
+      <TopBar source={source} hideSource={view === 'live'} />
 
       <nav className="actnav" aria-label="Demo 導覽">
         <div className="actnav__inner">
@@ -68,7 +72,7 @@ export function App() {
             <button
               key={v.id}
               type="button"
-              className="actnav__btn"
+              className={`actnav__btn${v.id === 'live' ? ' actnav__btn--live' : ''}`}
               aria-current={view === v.id}
               onClick={() => go(v.id)}
             >
@@ -86,6 +90,7 @@ export function App() {
             if (target) go(target.id)
           }} />
 
+          {view === 'live' && <LiveAsk />}
           {view === 'overview' && <Overview onStart={() => go('act1')} />}
           {view === 'compare' && <Compare />}
           {view === 'act1' && <Act1 onNext={() => go('act2')} />}
@@ -108,7 +113,7 @@ const SOURCE_LABEL: Record<DataSource, string> = {
   'live-fallback': 'LIVE → MOCK 備援',
 }
 
-function TopBar({ source }: { source: DataSource }) {
+function TopBar({ source, hideSource }: { source: DataSource; hideSource?: boolean }) {
   return (
     <header className="topbar">
       <div className="topbar__inner">
@@ -121,7 +126,12 @@ function TopBar({ source }: { source: DataSource }) {
         </div>
         <div className="topbar__meta">
           <span>資料時點 {DATASET_FACTS.as_of}</span>
-          <span className="chip-mode" data-live={source === 'live'}>{SOURCE_LABEL[source]}</span>
+          {hideSource ? (
+            /* 實際使用頁的資料來源由該頁自身的連線指示負責，避免兩處說法不一致 */
+            <span className="chip-mode" data-live>飼主實際使用模式</span>
+          ) : (
+            <span className="chip-mode" data-live={source === 'live'}>{SOURCE_LABEL[source]}</span>
+          )}
         </div>
       </div>
     </header>
