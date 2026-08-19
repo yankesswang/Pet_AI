@@ -50,11 +50,11 @@ export function Act3() {
         <SectionTitle num="3-1">本幕的起點：一張「來源沒說它過期」的許可證</SectionTitle>
         <p className="lede">
           農業部開放資料的「有效期間」欄位，多數過期許可證會附加 <span className="mono">(已失效)</span> 標記。
-          但有 <b>{DATASET_EXPIRY_STATS.expired_silent.toLocaleString()} 張沒有</b> ——
+          但有 <b>{DATASET_EXPIRY_STATS.expired_silent.toLocaleString()} 張沒有</b>，
           它們只寫著一個民國日期。任何直接信任來源狀態欄位的系統，都會把這些許可證當成現行有效並提供給使用者。
         </p>
 
-        {/* 來源 vs 系統 對照 —— 本幕最重要的一張圖 */}
+        {/* 來源 vs 系統 對照：本幕最重要的一張圖 */}
         <div className="split">
           <div className="split__col" data-state="RED">
             <div className="split__head">
@@ -78,7 +78,7 @@ export function Act3() {
               </div>
               <div className="blocked-row">
                 <span className="blocked-row__x" aria-hidden><IconBan size={18} /></span>
-                {/* 這裡描述的是「欄位裡缺少標記」，不是被刪除的內容，故不加刪除線 */}
+                {/* 這裡描述的是「欄位裡缺少標記」：不是被刪除的內容，故不加刪除線 */}
                 <span className="blocked-row__text" style={{ textDecoration: 'none', color: 'var(--c-ink)', fontWeight: 700 }}>
                   {SILENT_EXPIRY_CASE.source_marker}
                 </span>
@@ -149,8 +149,8 @@ export function Act3() {
         <div className="tbl-wrap">
           <table className="tbl">
             <tbody>
-              <tr><th style={{ width: 150 }}>許可證字號</th><td className="mono" style={{ fontWeight: 700 }}>{SILENT_EXPIRY_CASE.licence_no}</td></tr>
-              <tr><th>品名</th><td style={{ fontWeight: 700 }}>{SILENT_EXPIRY_CASE.name_zh}</td></tr>
+              <tr><th style={{ width: 150 }}>許可證字號</th><td className="mono strong">{SILENT_EXPIRY_CASE.licence_no}</td></tr>
+              <tr><th>品名</th><td className="strong">{SILENT_EXPIRY_CASE.name_zh}</td></tr>
               <tr><th>持證公司</th><td>{SILENT_EXPIRY_CASE.company}</td></tr>
               <tr><th>判定基準日</th><td className="mono">{DATASET_EXPIRY_STATS.as_of}</td></tr>
             </tbody>
@@ -244,7 +244,7 @@ export function Act3() {
               </div>
             </div>
             <Note>
-              {d.stats.scanned_answers.toLocaleString()} 筆歷史回答之所以掃得動，是因為每一筆都留有回答護照 ——
+              {d.stats.scanned_answers.toLocaleString()} 筆歷史回答之所以掃得動，是因為每一筆都留有回答護照，
               記錄了它引用了哪一個段落、哪一個版本。沒有主張級溯源，就沒有影響回溯。
             </Note>
           </section>
@@ -262,7 +262,7 @@ export function Act3() {
               {d.affected.map((a) => (
                 <div className="card" key={a.audit_id}>
                   <div className="card__head">
-                    <span className="card__title" style={{ fontSize: 'var(--t-base)' }}>{a.question_zh}</span>
+                    <span className="card__title t-base">{a.question_zh}</span>
                     <div style={{ display: 'flex', gap: 'var(--sp-2)', alignItems: 'center', flexWrap: 'wrap' }}>
                       <span className="verbadge">
                         {ROLE_META[a.role].icon({ size: 13 })} {ROLE_META[a.role].label}
@@ -329,7 +329,7 @@ export function Act3() {
                 <tbody>
                   {d.tasks.map((t) => (
                     <tr key={t.task_id}>
-                      <td className="mono" style={{ fontWeight: 700 }}>{t.task_id}</td>
+                      <td className="mono strong">{t.task_id}</td>
                       <td className="mono">{t.audit_id}</td>
                       <td>{t.assignee_zh}</td>
                       <td className="mono">{t.due_date_iso}</td>
@@ -367,7 +367,7 @@ export function Act3() {
                         {i < d.audit_log.length - 1 && <span className="tl__line" />}
                       </div>
                       <div className="tl__body">
-                        <div style={{ fontWeight: 700 }}>{l.event_zh}</div>
+                        <div className="strong">{l.event_zh}</div>
                         <div className="muted">{l.actor_zh}</div>
                         <div style={{ fontSize: 'var(--t-sm)', color: 'var(--c-ink-2)', marginTop: 2 }}>{l.detail_zh}</div>
                       </div>
@@ -379,7 +379,7 @@ export function Act3() {
           </section>
 
           <Thesis>
-            可追溯不是靜態引用，而是持續運作的知識治理能力 ——
+            可追溯不是靜態引用，而是持續運作的知識治理能力，
             系統不只知道當時用了什麼資料，還知道資料改變後，哪些既有回答不再值得信任，以及如何找到並處理它們。
           </Thesis>
         </>

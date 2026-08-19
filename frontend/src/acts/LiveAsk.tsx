@@ -13,7 +13,7 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ConsultResponse, FollowUpQuestion, GateState } from '../lib/types'
-import { consultFree, healthLive, type ConsultFields } from '../lib/api'
+import { consultFree, healthLive, ConsultError, type ConsultFields, type ConsultFailureKind } from '../lib/api'
 import { GATE_META } from '../lib/gateStates'
 import { AnswerPassportCard, ClaimButton } from '../components/Passport'
 import {
@@ -196,6 +196,8 @@ interface ErrorTurn {
   kind: 'error'
   id: string
   message: string
+  /** 失敗種類 —— 決定要請使用者做什麼，不可用訊息字串猜 */
+  failure: ConsultFailureKind
 }
 
 type Turn = UserTurn | AnswerTurn | ErrorTurn
@@ -299,15 +301,19 @@ export function LiveAsk() {
       // 下一題問另一種動物時就會被悄悄套上錯誤物種。
       // 後端本來就會從描述自行推斷，UI 不需要、也不應該替使用者記住這件事。
     } catch (e) {
+      const failure: ConsultFailureKind = e instanceof ConsultError ? e.kind : 'client'
       setTurns((prev) => [
         ...prev,
         {
           kind: 'error',
           id: nextId(),
           message: e instanceof Error ? e.message : String(e),
+          failure,
         },
       ])
-      setBackend('down')
+      // 只有真的連不上／逾時才代表後端掛了。
+      // 後端回 200 但前端解析失敗時把狀態列標成「後端離線」是錯誤指控。
+      if (failure === 'unreachable' || failure === 'timeout') setBackend('down')
     } finally {
       setLoading(false)
     }
@@ -363,7 +369,7 @@ export function LiveAsk() {
           ) : t.kind === 'answer' ? (
             <AnswerCard key={t.id} data={t.data} />
           ) : (
-            <ErrorCard key={t.id} message={t.message} />
+            <ErrorCard key={t.id} message={t.message} failure={t.failure} />
           ),
         )}
 
@@ -450,7 +456,7 @@ function BackendChip({ backend, bundle }: { backend: 'checking' | 'up' | 'down';
   if (backend === 'down') {
     return (
       <span className="live__chip" data-status="down">
-        <IconAlert size={15} /> 後端未連線 — 本頁不會顯示任何模擬答案
+        <IconAlert size={15} /> 後端未連線，本頁不會顯示任何模擬答案
       </span>
     )
   }
@@ -489,7 +495,7 @@ function SpeciesPicker({
       <span className="muted live__species-note">
         {value
           ? `已指定為${SPECIES_LABEL[value]}。貓與狗的用藥安全規則差異極大，指定物種會讓判定更準確。`
-          : '可以不選 —— 系統會嘗試從你的描述判斷物種；但貓狗用藥安全差異極大，指定後判定更準確。'}
+          : '可以不選，系統會嘗試從你的描述判斷物種；但貓狗用藥安全差異極大，指定後判定更準確。'}
       </span>
     </div>
   )
@@ -505,7 +511,7 @@ function EmptyState({ onPick }: { onPick: (t: string) => void }) {
       <div className="stack gap-2">
         <div className="live__empty-title">還沒有問題，先從這些開始？</div>
         <p className="muted">
-          點一下就會填入輸入框。以下四題會走到不同的判定結果 —— 有的會被系統擋下來轉急診，
+          點一下就會填入輸入框。以下四題會走到不同的判定結果，有的會被系統擋下來轉急診，
           有的會先被追問。這正是 Evidence Gate 與一般聊天機器人的差別。
         </p>
       </div>
@@ -601,7 +607,39 @@ function ThinkingCard() {
   )
 }
 
-function ErrorCard({ message }: { message: string }) {
+/**
+ * 各失敗種類對使用者的說法。
+ * 關鍵差異在 cause（到底是誰出問題）與 next（使用者該做什麼）：
+ * 前端解析失敗時要求使用者去重啟後端，只會讓人白忙一場。
+ */
+const FAILURE_COPY: Record<
+  ConsultFailureKind,
+  { head: string; cause: string; next: string }
+> = {
+  unreachable: {
+    head: '連不上後端服務',
+    cause: '前端送出了請求，但後端沒有接。這一題沒有送到判定引擎。',
+    next: '請確認後端服務（localhost:2222）是否正在執行，然後重新送出。',
+  },
+  timeout: {
+    head: '後端逾時未回應',
+    cause: '請求已送達，但等待超過時限仍未拿到判定結果。',
+    next: '後端可能正在啟動或負載過高，請稍候再送出一次。',
+  },
+  http: {
+    head: '後端拒絕了這次請求',
+    cause: '後端有回應，但回傳的是錯誤狀態，代表請求本身沒有通過後端檢查。',
+    next: '若持續發生，請檢查後端記錄；這不是重新送出就能解決的問題。',
+  },
+  client: {
+    head: '前端無法解析後端回應',
+    cause: '後端其實正常回覆了判定結果，是這個頁面在轉換顯示格式時出錯。',
+    next: '後端服務不需要重啟。這是前端的缺陷，請回報這段錯誤訊息。',
+  },
+}
+
+function ErrorCard({ message, failure }: { message: string; failure: ConsultFailureKind }) {
+  const copy = FAILURE_COPY[failure] ?? FAILURE_COPY.client
   return (
     <div className="live__turn">
       <section className="live__error">
@@ -610,12 +648,13 @@ function ErrorCard({ message }: { message: string }) {
         </header>
         <div className="live__error-body stack gap-3">
           <p>
-            後端沒有回應，所以<b>這一題沒有答案</b>。
-            本頁刻意不使用任何預先準備好的內容 —— 拿罐頭答案冒充真實判定，
+            <b>{copy.head}</b>，所以<b>這一題沒有答案</b>。
+            本頁刻意不使用任何預先準備好的內容，拿罐頭答案冒充真實判定，
             比沒有答案更危險。
           </p>
+          <p>{copy.cause}</p>
           <p className="mono muted">{message}</p>
-          <p className="muted">請確認後端服務（localhost:2222）是否正在執行，然後重新送出。</p>
+          <p className="muted">{copy.next}</p>
         </div>
       </section>
     </div>
@@ -653,7 +692,7 @@ function AnswerCard({ data }: { data: ConsultResponse }) {
       <div className="live__who"><IconShield size={14} /> VetLink AI</div>
 
       <section className="live__answer" data-state={state}>
-        {/* 狀態頭 — 四重編碼：色彩 + 字符 + 圖示 + 中文標籤 */}
+        {/* 狀態頭：四重編碼：色彩 + 字符 + 圖示 + 中文標籤 */}
         <header className="live__answer-head">
           <span className="live__answer-icon" aria-hidden>{m.icon({ size: 24 })}</span>
           <div className="live__answer-titles">
@@ -699,7 +738,7 @@ function AnswerCard({ data }: { data: ConsultResponse }) {
           {/* 危險徵兆 */}
           {dangers.length > 0 && (
             <section className="live__danger">
-              <header className="live__danger-head"><IconAlert size={17} /> 危險徵兆 — 出現任一項請立即就醫</header>
+              <header className="live__danger-head"><IconAlert size={17} /> 危險徵兆，出現任一項請立即就醫</header>
               <ul className="live__danger-list">
                 {dangers.map((t, i) => <li key={i}>{t}</li>)}
               </ul>
@@ -731,7 +770,7 @@ function AnswerCard({ data }: { data: ConsultResponse }) {
             </div>
           )}
 
-          {/* 飼主端被擋下的輸出類型 — 讓拒答成為有目的的結果，而非死路 */}
+          {/* 飼主端被擋下的輸出類型：讓拒答成為有目的的結果，而非死路 */}
           {blocked.length > 0 && (
             <details className="live__blocked">
               <summary>
@@ -812,7 +851,7 @@ function FollowUpForm({
               : `還差 ${questions.length - done} 項資訊，系統才有資格回答`}
           </b>
           <span className="muted">
-            這些題目由規則庫固定提供，不由生成模型即興產生 —— 同樣的缺漏一定得到同樣的題目。
+            這些題目由規則庫固定提供，不由生成模型即興產生，同樣的缺漏一定得到同樣的題目。
           </span>
         </div>
         <span className="live__followup-count">{done} / {questions.length}</span>
@@ -840,7 +879,7 @@ function FollowUpForm({
           </button>
           <span className="muted">
             {complete
-              ? '資料資格檢查可以重跑了 —— 依補齊後的內容，狀態可能轉為綠色（可見衛教）或紅色（急症轉介）。'
+              ? '資料資格檢查可以重跑了，依補齊後的內容，狀態可能轉為綠色（可見衛教）或紅色（急症轉介）。'
               : '在必要欄位補齊之前，系統不會輸出任何衛教或產品資訊，也不會用推測值代替你的答案。'}
           </span>
         </div>
@@ -932,7 +971,7 @@ function FieldControl({
       {spec.hint && <p className="live__q-hint">{spec.hint}</p>}
       {isOptionalBlank(question.field) && (
         <p className="live__q-hint">
-          <b>留白即代表「目前沒有在使用任何藥物或保健品」</b> —— 這是一個明確的答案，不會讓判定卡住。
+          <b>留白即代表「目前沒有在使用任何藥物或保健品」</b>，這是一個明確的答案，不會讓判定卡住。
         </p>
       )}
       <p className="live__q-meta">

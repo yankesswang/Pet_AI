@@ -139,7 +139,7 @@ export function AnswerPassportCard({ passport, defaultOpenClaim }: { passport: A
         <Row icon={<IconScale size={15} />} k="觸發規則">
           <div className="stack gap-3">
             <div>
-              <div className="label" style={{ marginBottom: 'var(--sp-2)' }}>成立（{fired.length}）— 造成本次系統動作</div>
+              <div className="label label--block">成立（{fired.length}）：造成本次系統動作</div>
               <div className="stack gap-2">
                 {fired.map((r) => (
                   <div className="rule rule--fired" key={r.rule_id}>
@@ -159,7 +159,7 @@ export function AnswerPassportCard({ passport, defaultOpenClaim }: { passport: A
               </div>
             </div>
             <div>
-              <div className="label" style={{ marginBottom: 'var(--sp-2)' }}>未成立（{passed.length}）— 已檢查並通過</div>
+              <div className="label label--block">未成立（{passed.length}）：已檢查並通過</div>
               <div className="stack gap-2">
                 {passed.map((r) => (
                   <div className="rule rule--passed" key={r.rule_id}>

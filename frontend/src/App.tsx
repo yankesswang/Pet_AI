@@ -27,13 +27,14 @@ interface ViewDef {
 const VIEWS: ViewDef[] = [
   // 實際使用頁放在第一個：這是唯一一頁使用者可以真的自己提問的地方，
   // 其餘分頁都是為評審設計的固定劇本導覽。
-  { id: 'live', kicker: 'LIVE · 實際使用', label: '我要提問｜真實提問與判定', role: 'owner' },
-  { id: 'overview', kicker: 'OVERVIEW', label: '四種狀態總覽', role: 'owner' },
-  { id: 'compare', kicker: 'ACT 0 · COMPARE', label: '對照組｜A / B / C 三組同輸入', role: 'owner' },
-  { id: 'act1', kicker: 'ACT 1 · RED', label: '第一幕｜系統拒絕用藥要求', role: 'owner' },
-  { id: 'amber', kicker: 'STATE · AMBER', label: '黃色｜資訊不足時的追問', role: 'owner' },
-  { id: 'act2', kicker: 'ACT 2 · BLUE', label: '第二幕｜同案例、不同角色', role: 'vet' },
-  { id: 'act3', kicker: 'ACT 3 · REPLAY', label: '第三幕｜仿單更新追回舊回答', role: 'admin' },
+  // kicker 只保留 label 沒說的資訊（此頁對應的閘門狀態），不重複幕次。
+  { id: 'live', kicker: 'LIVE', label: '我要提問｜真實提問與判定', role: 'owner' },
+  { id: 'overview', kicker: '', label: '四種狀態總覽', role: 'owner' },
+  { id: 'compare', kicker: '', label: '對照組｜A / B / C 三組同輸入', role: 'owner' },
+  { id: 'act1', kicker: 'RED', label: '第一幕｜系統拒絕用藥要求', role: 'owner' },
+  { id: 'amber', kicker: 'AMBER', label: '黃色｜資訊不足時的追問', role: 'owner' },
+  { id: 'act2', kicker: 'BLUE', label: '第二幕｜同案例、不同角色', role: 'vet' },
+  { id: 'act3', kicker: 'REPLAY', label: '第三幕｜仿單更新追回舊回答', role: 'admin' },
 ]
 
 export function App() {
@@ -76,7 +77,7 @@ export function App() {
               aria-current={view === v.id}
               onClick={() => go(v.id)}
             >
-              <span className="actnav__kicker">{v.kicker}</span>
+              {v.kicker && <span className="actnav__kicker">{v.kicker}</span>}
               <span className="actnav__label">{v.label}</span>
             </button>
           ))}
@@ -142,12 +143,7 @@ function TopBar({ source, hideSource }: { source: DataSource; hideSource?: boole
 
 function RoleSwitcher({ current, onPick }: { current: Role; onPick: (r: Role) => void }) {
   return (
-    <div
-      style={{
-        display: 'flex', gap: 'var(--sp-4)', alignItems: 'center',
-        flexWrap: 'wrap', padding: 'var(--sp-3) 0',
-      }}
-    >
+    <div className="row rolebar">
       <span className="label">目前角色視角</span>
       <div className="roleswitch" role="group" aria-label="角色切換">
         {(Object.keys(ROLE_META) as Role[]).map((r) => (
@@ -162,9 +158,7 @@ function RoleSwitcher({ current, onPick }: { current: Role; onPick: (r: Role) =>
           </button>
         ))}
       </div>
-      <span className="muted" style={{ flex: 1, minWidth: 260 }}>
-        {ROLE_META[current].scope}
-      </span>
+      <span className="muted rolebar__scope">{ROLE_META[current].scope}</span>
     </div>
   )
 }
@@ -186,7 +180,7 @@ function Overview({ onStart }: { onStart: () => void }) {
       </header>
 
       <Thesis>
-        這套系統的價值，在於它知道什麼時候必須拒絕回答 —— 而且每一次拒絕都留下可稽核的證明。
+        這套系統的價值，在於它知道什麼時候必須拒絕回答，而且每一次拒絕都留下可稽核的證明。
       </Thesis>
 
       {/* 四種狀態 */}
@@ -220,12 +214,10 @@ function Overview({ onStart }: { onStart: () => void }) {
                 ['一致性資格', '來源沒有未解決衝突；否則拒答並轉介。', 'RED', '來源衝突 → 拒答'],
               ].map(([k, v, state, label]) => (
                 <tr key={k}>
-                  <td style={{ fontWeight: 700 }}>{k}</td>
+                  <td className="strong">{k}</td>
                   <td>{v}</td>
                   <td>
-                    <span className="risk" data-state={state} style={{ color: 'var(--st)', background: 'var(--st-bg)' }}>
-                      {label}
-                    </span>
+                    <span className="risk" data-state={state}>{label}</span>
                   </td>
                 </tr>
               ))}
@@ -261,13 +253,10 @@ function Overview({ onStart }: { onStart: () => void }) {
             <div className="legend__item" data-state={c.state} key={c.title}>
               <div className="legend__head">
                 <span className="legend__glyph">{c.icon}</span>
-                <span className="legend__name" style={{ fontSize: 'var(--t-md)' }}>{c.title}</span>
+                <span className="legend__name">{c.title}</span>
               </div>
               <div className="legend__row">{c.body}</div>
-              <div
-                className="legend__row"
-                style={{ marginTop: 'auto', paddingTop: 'var(--sp-3)', borderTop: '1px solid var(--c-border)' }}
-              >
+              <div className="legend__row pushdown">
                 <b>證明重點：</b>{c.proof}
               </div>
             </div>
@@ -294,7 +283,7 @@ function Overview({ onStart }: { onStart: () => void }) {
             ['稽核編號', '可回查完整輸入、檢索結果、回答與攔截紀錄'],
           ].map(([k, v]) => (
             <div className="stat" key={k}>
-              <div style={{ fontSize: 'var(--t-md)', fontWeight: 900 }}>{k}</div>
+              <div className="stat__label">{k}</div>
               <div className="stat__k">{v}</div>
             </div>
           ))}
@@ -328,7 +317,7 @@ function Overview({ onStart }: { onStart: () => void }) {
         </Note>
       </section>
 
-      <div style={{ display: 'flex', gap: 'var(--sp-4)', flexWrap: 'wrap', alignItems: 'center' }}>
+      <div className="row">
         <button className="btn btn--primary btn--lg" onClick={onStart}>
           從第一幕開始 <IconArrowRight size={18} />
         </button>
@@ -342,18 +331,18 @@ function Overview({ onStart }: { onStart: () => void }) {
 
 function Footer() {
   return (
-    <footer className="stack gap-4" style={{ marginTop: 'var(--sp-12)', paddingTop: 'var(--sp-6)', borderTop: '2px solid var(--c-border)' }}>
-      <div style={{ display: 'flex', gap: 'var(--sp-3)', flexWrap: 'wrap', alignItems: 'center' }}>
+    <footer className="stack gap-4 sitefoot">
+      <div className="row row--tight">
         <span className="thesis__icon"><IconTarget size={20} /></span>
-        <span style={{ fontWeight: 700 }}>四種狀態速查</span>
-        <div style={{ display: 'flex', gap: 'var(--sp-2)', flexWrap: 'wrap', marginLeft: 'auto' }}>
+        <span className="strong">四種狀態速查</span>
+        <div className="row row--tight row__end">
           {GATE_ORDER.map((s) => <StateBadge key={s} state={s} size="sm" />)}
         </div>
       </div>
-      <p className="muted">
+      <p className="sitefoot__legal">
         本畫面為 2026 中化智匯盃競賽 Demo。所有臨床規則均標示來源與審核狀態；
         產品資料取自農業部動物用藥品許可證開放資料。
-        系統不提供劑量計算、處方生成或處方藥購買通路 —— 處方藥依法須由執業獸醫師診斷後開具處方，始得販賣及使用。
+        系統不提供劑量計算、處方生成或處方藥購買通路；處方藥依法須由執業獸醫師診斷後開具處方，始得販賣及使用。
         {GATE_ORDER.map((s) => `${GATE_META[s].glyph} ${GATE_META[s].label}`).join('　')}
       </p>
     </footer>

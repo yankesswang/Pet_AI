@@ -46,18 +46,73 @@ export const getLastSource = (): DataSource => lastSource
 
 const delay = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
+/* ------------------------------------------------------------------ *
+ * 失敗原因分類
+ *
+ * 「拿不到答案」有好幾種完全不同的成因，對使用者的意義也不同：
+ * 後端沒開、後端回錯、或前端自己解析爆掉。若一律顯示成
+ * 「後端沒有回應，請確認服務是否正在執行」，在前端才是元凶時
+ * 就是把使用者指向錯誤的方向 —— 這與本頁「只呈現真實情況、
+ * 不用罐頭內容冒充」的原則同樣違背，只是騙的是失敗原因而非答案。
+ * 因此在錯誤真正發生的地方標記種類，UI 只負責照實呈現。
+ * ------------------------------------------------------------------ */
+
+export type ConsultFailureKind =
+  /** 連線不到後端（服務沒開、port 不對、proxy 失效） */
+  | 'unreachable'
+  /** 超過逾時仍未回應 */
+  | 'timeout'
+  /** 後端有回應，但回非 2xx */
+  | 'http'
+  /** 後端回了 200，但前端解析／轉接時出錯 —— 這是前端的問題 */
+  | 'client'
+
+export class ConsultError extends Error {
+  readonly kind: ConsultFailureKind
+  readonly status?: number
+  constructor(kind: ConsultFailureKind, message: string, status?: number) {
+    super(message)
+    this.name = 'ConsultError'
+    this.kind = kind
+    this.status = status
+  }
+}
+
+const REQUEST_TIMEOUT_MS = 6000
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const ctrl = new AbortController()
-  const timer = setTimeout(() => ctrl.abort(), 6000)
+  let timedOut = false
+  const timer = setTimeout(() => {
+    timedOut = true
+    ctrl.abort()
+  }, REQUEST_TIMEOUT_MS)
   try {
-    const res = await fetch(path, {
-      ...init,
-      signal: ctrl.signal,
-      headers: { 'Content-Type': 'application/json', ...(init?.headers ?? {}) },
-    })
-    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
-    // 後端 YELLOW → 前端 AMBER，在此統一正規化
-    return normalizeGates((await res.json()) as T)
+    let res: Response
+    try {
+      res = await fetch(path, {
+        ...init,
+        signal: ctrl.signal,
+        headers: { 'Content-Type': 'application/json', ...(init?.headers ?? {}) },
+      })
+    } catch (e) {
+      // fetch 只在「根本連不上」或被 abort 時 reject
+      if (timedOut) {
+        throw new ConsultError('timeout', `等待後端回應超過 ${REQUEST_TIMEOUT_MS / 1000} 秒`)
+      }
+      throw new ConsultError('unreachable', e instanceof Error ? e.message : String(e))
+    }
+    if (!res.ok) {
+      throw new ConsultError('http', `${res.status} ${res.statusText}`, res.status)
+    }
+    // 後端已回 200，之後的失敗（JSON 損毀、正規化出錯）都是解析階段的問題，
+    // 不是後端沒回應 —— 標成 'client'，避免把使用者指向重啟後端。
+    try {
+      // 後端 YELLOW → 前端 AMBER，在此統一正規化
+      return normalizeGates((await res.json()) as T)
+    } catch (e) {
+      throw new ConsultError('client', e instanceof Error ? e.message : String(e))
+    }
   } finally {
     clearTimeout(timer)
   }
@@ -120,16 +175,19 @@ function scopeToLines(scope: unknown, fb: unknown): string[] {
  */
 function adaptVisitSummary(
   raw: Record<string, unknown> | undefined,
-  fb: Record<string, unknown>,
+  fallback: Record<string, unknown> | undefined,
 ): unknown {
-  if (!raw || typeof raw !== 'object') return fb
+  // LIVE 頁刻意不提供 fixtures 骨架，fb 可能是 undefined；
+  // 以空物件承接，避免讀取 fb.chief_complaint_zh 時整頁崩潰。
+  const fb = fallback ?? {}
+  if (!raw || typeof raw !== 'object') return fallback
   if ('pet' in raw) return raw
   const symptoms = Array.isArray(raw.symptoms) ? (raw.symptoms as string[]) : []
   return {
     ...fb,
     chief_complaint_zh: symptoms.length ? symptoms.join('、') : fb.chief_complaint_zh,
     gate_state: normalizeGateState(raw.gate_state ?? fb.gate_state),
-    note_zh: raw.note ?? (fb as Record<string, unknown>).note_zh,
+    note_zh: raw.note ?? fb.note_zh,
   }
 }
 
@@ -472,14 +530,20 @@ export async function consultFree(
   })
   lastSource = 'live'
 
-  const adapted = adaptConsult(raw, LIVE_SKELETON)
-  return {
-    ...adapted,
-    follow_up_questions: adaptRequiredQuestions(raw.required_questions),
-    // 後端未提供醫院名冊；此頁寧可不顯示，也不借用 fixtures 的示範醫院
-    // 冒充「附近的真實急診醫院」（提案 §5.1 要求僅顯示經確認的營業資訊）。
-    emergency_referral: undefined,
-    timeline: [],
+  // 到這裡後端已經正常回應了。以下任何例外都是前端轉接層的問題，
+  // 標成 'client' 才不會讓使用者去重啟一個其實運作正常的後端。
+  try {
+    const adapted = adaptConsult(raw, LIVE_SKELETON)
+    return {
+      ...adapted,
+      follow_up_questions: adaptRequiredQuestions(raw.required_questions),
+      // 後端未提供醫院名冊；此頁寧可不顯示，也不借用 fixtures 的示範醫院
+      // 冒充「附近的真實急診醫院」（提案 §5.1 要求僅顯示經確認的營業資訊）。
+      emergency_referral: undefined,
+      timeline: [],
+    }
+  } catch (e) {
+    throw new ConsultError('client', e instanceof Error ? e.message : String(e))
   }
 }
 

@@ -45,8 +45,8 @@ export function Compare() {
         <SectionTitle num="§12.1">安全不是宣稱，而是三組對照測試</SectionTitle>
         <p className="lede">
           提案用三組架構跑<b>完全相同的輸入</b>：A 組是一般 LLM、B 組是單純 RAG、
-          C 組是 VetLink AI。差別不在模型有多強 ——
-          三組都可以用同一個模型 —— 而在於<b>系統有沒有能力在生成之前，判斷這次能不能回答</b>。
+          C 組是 VetLink AI。差別不在模型有多強（三組都可以用同一個模型），
+          而在於<b>系統有沒有能力在生成之前，判斷這次能不能回答</b>。
         </p>
         <Steps
           steps={['同一個飼主問題', 'A 組：直接生成', 'B 組：檢索後生成', 'C 組：先判定資格']}
@@ -83,7 +83,7 @@ export function Compare() {
 
       {data && (
         <>
-          {/* 預錄範例揭露 —— 誠實標示優先於畫面美觀 */}
+          {/* 預錄範例揭露：誠實標示優先於畫面美觀 */}
           {data.any_prerecorded && (
             <Note>
               <b>資料揭露：</b>{data.disclaimer_zh}
@@ -98,7 +98,7 @@ export function Compare() {
             </div>
           </section>
 
-          {/* 維度對照表 —— 最直接的證據 */}
+          {/* 維度對照表：最直接的證據 */}
           <section className="stack gap-4">
             <SectionTitle num="判準">四個關鍵維度</SectionTitle>
             <DimensionTable data={data} />
@@ -106,7 +106,7 @@ export function Compare() {
               「是否提供劑量」對飼主端而言<b>越少越好</b>：依動物用藥品管理法，
               處方藥須經執業獸醫師診斷開立處方後始得販賣及使用。
               A 組的劑量是由本系統既有的<b>角色政策掃描器</b>實際掃出來的，
-              不是人工標註 —— 同一支掃描器也用於 C 組，結果為零違規。
+              不是人工標註，同一支掃描器也用於 C 組，結果為零違規。
             </Note>
           </section>
 
@@ -126,7 +126,7 @@ export function Compare() {
                   <div className="legend__item" key={a.arm} data-state={ARM_TONE[a.arm].state}>
                     <div className="legend__head">
                       <span className="legend__glyph" aria-hidden>{a.arm}</span>
-                      <span className="legend__name" style={{ fontSize: 'var(--t-base)' }}>
+                      <span className="legend__name t-base">
                         {a.name_zh}
                       </span>
                     </div>
@@ -158,13 +158,13 @@ function ArmCard({ arm }: { arm: CompareArm }) {
         <span className="legend__glyph" aria-hidden>
           {arm.arm === 'C' ? <IconShield size={20} /> : <IconAlert size={20} />}
         </span>
-        <span className="legend__name" style={{ fontSize: 'var(--t-md)' }}>{arm.name_zh}</span>
+        <span className="legend__name t-md">{arm.name_zh}</span>
       </div>
       <div className="label">{tone.kicker}</div>
-      <div className="legend__row" style={{ color: 'var(--c-ink-2)' }}>{arm.subtitle_zh}</div>
+      <div className="legend__row ink-2">{arm.subtitle_zh}</div>
 
-      {/* 資料來源標示 —— 預錄 vs 即時，必須誠實 */}
-      <div style={{ display: 'flex', gap: 'var(--sp-2)', flexWrap: 'wrap' }}>
+      {/* 資料來源標示：預錄 vs 即時，必須誠實 */}
+      <div className="row row--tight">
         <span
           className="verbadge"
           style={
@@ -186,25 +186,22 @@ function ArmCard({ arm }: { arm: CompareArm }) {
 
       {/* 架構 */}
       <div className="legend__row">
-        <b>架構：</b><span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--t-xs)' }}>
+        <b>架構：</b><span className="mono-xs">
           {arm.architecture_zh}
         </span>
       </div>
 
       {/* 輸出 */}
       <div className="label">系統輸出</div>
-      <div
-        className={arm.arm === 'C' ? 'block block--action' : 'block block--forbid'}
-        style={{ margin: 0 }}
-      >
+      <div className={arm.arm === 'C' ? 'block block--action' : 'block block--forbid'}>
         <div className="block__body">
-          <p style={{ margin: 0, fontSize: 'var(--t-sm)', lineHeight: 1.7 }}>{arm.answer_zh}</p>
+          <p className="flat readable">{arm.answer_zh}</p>
           {arm.messages && arm.messages.length > 0 && (
             <div className="stack gap-2" style={{ marginTop: 'var(--sp-3)' }}>
               {arm.messages.map((m, i) => (
                 <div className="bullet" key={i}>
                   <span className="bullet__dot" />
-                  <span style={{ fontSize: 'var(--t-sm)' }}>{m}</span>
+                  <span className="t-sm">{m}</span>
                 </div>
               ))}
             </div>
@@ -212,9 +209,9 @@ function ArmCard({ arm }: { arm: CompareArm }) {
         </div>
       </div>
 
-      {/* 政策違規 —— A 組的關鍵證據 */}
+      {/* 政策違規：A 組的關鍵證據 */}
       {arm.policy_violations.length > 0 && (
-        <div className="halted" style={{ margin: 0 }}>
+        <div className="halted flat">
           <header className="halted__head">
             <IconStop size={18} />
             <span>角色政策掃描結果</span>
@@ -233,16 +230,16 @@ function ArmCard({ arm }: { arm: CompareArm }) {
         </div>
       )}
 
-      {/* 攔截證據 —— C 組的關鍵證據 */}
+      {/* 攔截證據：C 組的關鍵證據 */}
       {arm.product_retrieval_halted && (
-        <div className="halted" style={{ margin: 0 }}>
+        <div className="halted flat">
           <header className="halted__head">
             <IconStop size={18} />
             <span>產品檢索已停止</span>
             <span className="halted__stamp">RETRIEVAL HALTED</span>
           </header>
           <div className="halted__body">
-            <p className="halted__reason" style={{ fontSize: 'var(--t-sm)' }}>
+            <p className="halted__reason t-sm">
               {arm.refusal_detail_zh}
             </p>
             {arm.blocked_output_types && arm.blocked_output_types.length > 0 && (
@@ -262,7 +259,7 @@ function ArmCard({ arm }: { arm: CompareArm }) {
         </div>
       )}
 
-      {/* 觸發規則 —— 證明 C 組是規則驅動 */}
+      {/* 觸發規則：證明 C 組是規則驅動 */}
       {arm.rules_fired && arm.rules_fired.length > 0 && (
         <>
           <div className="label">觸發的確定性規則</div>
@@ -275,7 +272,7 @@ function ArmCard({ arm }: { arm: CompareArm }) {
                     <span className="rule__id">{r.rule_id}</span>
                     <span className="rule__ver">{r.version}</span>
                   </div>
-                  <div className="rule__name" style={{ fontSize: 'var(--t-sm)' }}>{r.title}</div>
+                  <div className="rule__name t-sm">{r.title}</div>
                   <div className="rule__action">→ {r.action_zh}</div>
                 </div>
                 <span className="rule__verdict">FIRED</span>
@@ -290,7 +287,7 @@ function ArmCard({ arm }: { arm: CompareArm }) {
         來源（{arm.citations.length > 0 ? `${arm.citations.length} 筆` : '無'}）
       </div>
       {arm.citations.length === 0 ? (
-        <div className="legend__row" style={{ color: 'var(--s-red)' }}>
+        <div className="legend__row ink-danger">
           <IconBan size={14} /> 完全沒有來源，無法回查任何一句話的依據。
         </div>
       ) : (
@@ -298,14 +295,13 @@ function ArmCard({ arm }: { arm: CompareArm }) {
           {arm.citations.slice(0, 4).map((c, i) => (
             <div
               key={`${c.doc_id}-${c.passage_id ?? i}`}
-              className="legend__row"
-              style={{ display: 'flex', gap: 'var(--sp-2)', alignItems: 'flex-start' }}
+              className="legend__row row row--top row--tight"
             >
               <IconDoc size={14} />
               <span>
                 <b>{c.title_zh}</b>
                 {c.passage_id && (
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--t-xs)' }}>
+                  <span className="mono-xs">
                     {' '}· {c.passage_id}
                   </span>
                 )}
@@ -323,16 +319,16 @@ function ArmCard({ arm }: { arm: CompareArm }) {
       )}
 
       {/* 稽核編號 */}
-      <div className="legend__row arm__foot" style={{ marginTop: 'var(--sp-3)', paddingTop: 'var(--sp-3)', borderTop: '1px solid var(--c-border)' }}>
+      <div className="legend__row arm__foot">
         <b>稽核編號：</b>
         {arm.audit_id ? (
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--t-xs)' }}>{arm.audit_id}</span>
+          <span className="mono-xs">{arm.audit_id}</span>
         ) : (
-          <span style={{ color: 'var(--s-red)' }}>無 —— 事後無法回查這次為什麼這樣回答</span>
+          <span className="ink-danger">無，事後無法回查這次為什麼這樣回答</span>
         )}
       </div>
 
-      <div className="legend__row muted" style={{ fontSize: 'var(--t-xs)' }}>{arm.note_zh}</div>
+      <div className="legend__row muted t-xs">{arm.note_zh}</div>
     </article>
   )
 }
@@ -365,7 +361,7 @@ function DimensionTable({ data }: { data: CompareResponse }) {
         <tbody>
           {keys.map((k) => (
             <tr key={k}>
-              <td style={{ fontWeight: 700 }}>{label(k)}</td>
+              <td className="strong">{label(k)}</td>
               {data.arms.map((a) => {
                 const d = a.dimensions[k]
                 return (

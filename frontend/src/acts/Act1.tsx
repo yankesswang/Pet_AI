@@ -30,7 +30,7 @@ export function Act1({ onNext }: { onNext: () => void }) {
         <SectionTitle num="第一幕">系統拒絕看似合理的用藥要求</SectionTitle>
         <p className="lede">
           飼主提出的是一個非常自然的請求：先吃點藥觀察看看。多數 AI 會直接回答。
-          VetLink AI 在檢索任何產品資料<b>之前</b>就停止了流程 —— 因為這組症狀符合急症紅旗規則。
+          VetLink AI 在檢索任何產品資料<b>之前</b>就停止了流程，因為這組症狀符合急症紅旗規則。
         </p>
         <Steps steps={['飼主描述症狀', '症狀結構化', 'Evidence Gate 判定', '停止檢索並轉介']} current={d ? 3 : 0} />
       </header>
@@ -57,7 +57,7 @@ export function Act1({ onNext }: { onNext: () => void }) {
         <>
           <Verdict state={d.gate_state} headline={d.headline_zh} auditId={d.passport.audit_id}>
             <div className="grid-2">
-              {/* 停止檢索 —— 關鍵證據 */}
+              {/* 停止檢索：關鍵證據 */}
               <HaltedPanel reason={d.passport.halt_reason_zh ?? ''} fields={ACT1_BLOCKED_FIELDS} />
 
               {/* 成立的規則 */}
@@ -182,7 +182,7 @@ export function Act1({ onNext }: { onNext: () => void }) {
                     </div>
                     <div className="stack gap-2">
                       <div className="label">主訴</div>
-                      <div style={{ fontWeight: 700 }}>{d.visit_summary.chief_complaint_zh}</div>
+                      <div className="strong">{d.visit_summary.chief_complaint_zh}</div>
                     </div>
                     <div className="tbl-wrap">
                       <table className="tbl">

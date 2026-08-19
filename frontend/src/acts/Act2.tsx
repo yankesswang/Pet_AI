@@ -42,7 +42,7 @@ export function Act2({ onNext }: { onNext: () => void }) {
       <header className="stack gap-4">
         <SectionTitle num="第二幕">同一案例，不同角色看到不同內容</SectionTitle>
         <p className="lede">
-          第一幕的案例沒有改變 —— 貓、疑似尿道阻塞、同一份症狀時間軸。改變的只有<b>誰在看</b>。
+          第一幕的案例沒有改變，貓、疑似尿道阻塞、同一份症狀時間軸。改變的只有<b>誰在看</b>。
           獸醫掃描飼主授權 QR Code 並通過執照驗證後，系統從紅色轉入<b>藍色專業模式</b>：
           解鎖核准仿單與許可證原文檢索，但急症紅旗紀錄完整保留，劑量與處方決策仍由獸醫師保留。
         </p>
@@ -98,7 +98,7 @@ export function Act2({ onNext }: { onNext: () => void }) {
                     </tr>
                     <tr>
                       <th>不含</th>
-                      <td>劑量計算、處方生成、購買通路 —— 系統一律不提供</td>
+                      <td>劑量計算、處方生成、購買通路，系統一律不提供</td>
                     </tr>
                   </tbody>
                 </table>
@@ -225,7 +225,7 @@ export function Act2({ onNext }: { onNext: () => void }) {
                 <tbody>
                   {ROLE_DIFF_ROWS.map((r) => (
                     <tr key={r.field_zh}>
-                      <td style={{ fontWeight: 700 }}>{r.field_zh}</td>
+                      <td className="strong">{r.field_zh}</td>
                       <td>{r.owner}</td>
                       <td>{r.vet}</td>
                       <td>
@@ -369,9 +369,9 @@ export function Act2({ onNext }: { onNext: () => void }) {
                   </div>
                 </div>
 
-                {/* 被閘門擋下的產品 — 閘門確實在運作的證據 */}
+                {/* 被閘門擋下的產品：閘門確實在運作的證據 */}
                 <div className="stack gap-4">
-                  <div className="label">被閘門排除的記錄 — 閘門確實在運作</div>
+                  <div className="label">被閘門排除的記錄，閘門確實在運作</div>
                   {d.filtered_out.map((f) => (
                     <div className="halted" key={f.record.licence_no}>
                       <header className="halted__head">
@@ -454,7 +454,7 @@ function ProductCard({
         <span className="card__title" style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-2)' }}>
           <IconDoc size={19} /> {p.name_zh}
         </span>
-        <div style={{ display: 'flex', gap: 'var(--sp-2)', flexWrap: 'wrap' }}>
+        <div className="row row--tight">
           <span className="verbadge">{p.licence_no}</span>
           <VersionBadge version={p.version} from={p.issue_date_iso} to={p.expiry_date_iso} expired={p.is_expired} />
         </div>

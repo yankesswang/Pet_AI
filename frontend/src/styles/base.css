@@ -13,7 +13,7 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-h1, h2, h3, h4 { margin: 0; line-height: 1.3; font-weight: 700; letter-spacing: -0.01em; }
+h1, h2, h3, h4 { margin: 0; line-height: 1.3; font-weight: var(--w-strong); letter-spacing: -0.01em; }
 p { margin: 0; }
 ul, ol { margin: 0; padding: 0; list-style: none; }
 
@@ -78,9 +78,9 @@ code, .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums;
   border: 2px solid rgba(255,255,255,0.5);
   border-radius: var(--r-md);
 }
-.brand__name { font-size: var(--t-md); font-weight: 900; letter-spacing: 0.01em; }
+.brand__name { font-size: var(--t-md); font-weight: var(--w-strong); letter-spacing: 0.01em; }
 .brand__tag {
-  font-size: var(--t-xs); font-weight: 500;
+  font-size: var(--t-xs); font-weight: var(--w-medium);
   color: rgba(255,255,255,0.82);
   letter-spacing: 0.04em;
 }
@@ -92,7 +92,7 @@ code, .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums;
 .chip-mode {
   font-family: var(--font-mono);
   font-size: var(--t-xs);
-  font-weight: 600;
+  font-weight: var(--w-medium);
   padding: var(--sp-1) var(--sp-3);
   border-radius: 999px;
   border: 1px solid rgba(255,255,255,0.4);
@@ -111,16 +111,24 @@ code, .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums;
   display: flex; align-items: stretch; gap: 0;
   max-width: 1360px; margin: 0 auto;
   overflow-x: auto;
+  /* 七個分頁在 1440px 仍會溢出，最後一項被裁掉且沒有任何可捲動的提示。
+     保留水平捲動，但補上右側留白與淡出遮罩，讓「還有內容」看得出來。 */
+  scrollbar-width: thin;
+  padding-right: var(--sp-6);
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent 100%);
+          mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent 100%);
+}
+@media (max-width: 640px) {
+  .actnav__btn { padding: var(--sp-3) var(--sp-4); }
 }
 .actnav__btn {
-  display: flex; flex-direction: column; gap: 2px;
+  display: flex; align-items: baseline; gap: var(--sp-2);
   padding: var(--sp-3) var(--sp-5);
-  border-bottom: 4px solid transparent;
+  border-bottom: 3px solid transparent;
   transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
   white-space: nowrap;
   text-align: left;
-  min-height: 62px;
-  justify-content: center;
+  min-height: 56px;
 }
 .actnav__btn:hover { background: var(--c-surface-alt); }
 .actnav__btn[aria-current='true'] {
@@ -128,20 +136,22 @@ code, .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums;
   background: var(--c-surface-alt);
 }
 .actnav__kicker {
-  font-size: var(--t-xs); font-weight: 700; letter-spacing: 0.08em;
+  font-size: var(--t-xs); font-weight: var(--w-medium);
+  letter-spacing: 0.02em;
   color: var(--c-ink-3);
   font-family: var(--font-mono);
 }
 .actnav__btn[aria-current='true'] .actnav__kicker { color: var(--c-brand-2); }
-.actnav__label { font-size: var(--t-sm); font-weight: 700; color: var(--c-ink); }
+.actnav__label { font-size: var(--t-sm); font-weight: var(--w-strong); color: var(--c-ink); }
 
 /* ---------- Layout primitives ---------- */
-main { flex: 1; padding: var(--sp-8) 0 var(--sp-16); }
+main { flex: 1; padding: var(--sp-10) 0 var(--sp-16); }
 
 .stack   { display: flex; flex-direction: column; }
 .gap-2 { gap: var(--sp-2); } .gap-3 { gap: var(--sp-3); }
 .gap-4 { gap: var(--sp-4); } .gap-5 { gap: var(--sp-5); }
 .gap-6 { gap: var(--sp-6); } .gap-8 { gap: var(--sp-8); }
+.gap-section { gap: var(--sp-section); }
 
 .card {
   background: var(--c-surface);
@@ -157,23 +167,31 @@ main { flex: 1; padding: var(--sp-8) 0 var(--sp-16); }
   background: var(--c-surface-alt);
   border-radius: var(--r-lg) var(--r-lg) 0 0;
 }
-.card__title { font-size: var(--t-md); font-weight: 700; }
+.card__title { font-size: var(--t-md); font-weight: var(--w-strong); }
 .card__body { padding: var(--sp-5); }
 
 .section-title {
-  font-size: var(--t-lg); font-weight: 900;
-  display: flex; align-items: center; gap: var(--sp-3);
+  font-size: var(--t-lg); font-weight: var(--w-strong);
+  display: flex; align-items: baseline; gap: var(--sp-3);
+  letter-spacing: -0.015em;
 }
+/* 提案書章節對照。評審會拿著提案書對照，因此保留編號，
+   但改為低調的行尾參照，不再與標題爭奪視覺層級。 */
 .section-num {
-  font-family: var(--font-mono); font-size: var(--t-sm); font-weight: 700;
-  background: var(--c-brand); color: #fff;
-  padding: 2px var(--sp-2); border-radius: var(--r-sm);
+  font-family: var(--font-mono); font-size: var(--t-xs);
+  font-weight: var(--w-medium);
+  color: var(--c-ink-3);
+  letter-spacing: 0.04em;
+  order: 2;
+  padding-left: var(--sp-2);
+  border-left: 1px solid var(--c-border);
+  white-space: nowrap;
 }
-.lede { font-size: var(--t-md); color: var(--c-ink-2); line-height: 1.7; }
+.lede { font-size: var(--t-md); color: var(--c-ink-2); line-height: 1.7; max-width: var(--measure); }
 .muted { color: var(--c-ink-3); font-size: var(--t-sm); }
 
 .label {
-  font-size: var(--t-xs); font-weight: 700;
+  font-size: var(--t-xs); font-weight: var(--w-strong);
   letter-spacing: 0.09em; text-transform: uppercase;
   color: var(--c-ink-3); font-family: var(--font-mono);
 }
@@ -200,7 +218,7 @@ main { flex: 1; padding: var(--sp-8) 0 var(--sp-16); }
   min-height: 46px;
   padding: var(--sp-3) var(--sp-5);
   border-radius: var(--r-md);
-  font-weight: 700; font-size: var(--t-sm);
+  font-weight: var(--w-strong); font-size: var(--t-sm);
   transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease), transform 120ms var(--ease);
   border: 1px solid transparent;
 }
@@ -225,3 +243,66 @@ main { flex: 1; padding: var(--sp-8) 0 var(--sp-16); }
   background: var(--s-green-bg);
 }
 .actnav__btn--live[aria-current='true'] .actnav__kicker { color: var(--s-green); }
+
+/* ---------- Inline-style 收斂 ----------
+   以下類別取代先前散落在 App.tsx 與各幕的 style={{...}}。
+   同一種版面在 5 個檔案裡各寫一次是目前視覺不一致的主因。 */
+
+/* 水平排列：換行、置中對齊，站內最常見的一種列 */
+.row {
+  display: flex; align-items: center;
+  gap: var(--sp-4); flex-wrap: wrap;
+}
+.row--tight { gap: var(--sp-2); }
+.row--top { align-items: flex-start; }
+.row__end { margin-left: auto; }
+
+/* 角色切換列 */
+.rolebar { padding: var(--sp-3) 0; }
+.rolebar__scope { flex: 1; min-width: 260px; }
+
+/* 卡片內把某塊推到底部並以細線分隔（原本是 marginTop:auto 的內聯寫法） */
+.pushdown {
+  margin-top: auto;
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--c-border);
+}
+
+/* 頁尾 */
+.sitefoot {
+  margin-top: var(--sp-section);
+  padding-top: var(--sp-6);
+  border-top: 1px solid var(--c-border);
+}
+.sitefoot__legal {
+  max-width: var(--measure);
+  color: var(--c-ink-3);
+  font-size: var(--t-sm);
+  line-height: 1.75;
+}
+
+/* 護照/統計卡內的鍵名 */
+.stat__label { font-size: var(--t-md); font-weight: var(--w-strong); }
+.strong { font-weight: var(--w-strong); }
+.label--block { display: block; margin-bottom: var(--sp-2); }
+
+/* 表格內的狀態標籤沿用 data-state 作用域，不再逐處內聯色碼 */
+.risk[data-state] { color: var(--st); background: var(--st-bg); }
+
+/* 字級 / 顏色工具：取代各幕內聯的 fontSize 與 color 覆寫。
+   刻意只開放 token 既有階梯，避免再度出現任意數值。 */
+.t-xs   { font-size: var(--t-xs); }
+.t-sm   { font-size: var(--t-sm); }
+.t-base { font-size: var(--t-base); }
+.t-md   { font-size: var(--t-md); }
+
+.ink-2  { color: var(--c-ink-2); }
+.ink-3  { color: var(--c-ink-3); }
+.ink-st { color: var(--st); }
+.ink-danger { color: var(--s-red); }
+
+.mono-xs { font-family: var(--font-mono); font-size: var(--t-xs); }
+
+.w-normal { font-weight: var(--w-body); }
+.flat     { margin: 0; }
+.readable { font-size: var(--t-sm); line-height: 1.7; }
