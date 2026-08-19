@@ -1,0 +1,14 @@
+# VetLink AI — backend 相依套件
+# 對應已驗證環境：/home/trx50/Project/Pet_AI/.venv (Python 3.10.12)
+#
+# 注意：閘門決策路徑不依賴任何 LLM / 向量資料庫套件。
+# 規則評估、主張驗證、效期換算與影響回溯皆使用 stdlib + PyYAML。
+
+fastapi==0.141.1
+uvicorn==0.52.4
+pydantic==2.13.4
+PyYAML==6.0.3
+
+# 測試
+pytest==9.1.1
+httpx==0.28.1

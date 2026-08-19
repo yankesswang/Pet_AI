@@ -1,0 +1,86 @@
+/* ============================================================
+   VetLink AI — Design Tokens
+   臨床級、法規導向的視覺系統。基調為中性 slate，
+   飽和色只保留給四種閘門狀態，使狀態成為畫面上唯一的訊號。
+   ============================================================ */
+
+:root {
+  /* ---- 中性基底 ---- */
+  --c-bg:            #EEF2F7;
+  --c-surface:       #FFFFFF;
+  --c-surface-alt:   #F6F8FB;
+  --c-surface-sunk:  #E7ECF3;
+  --c-ink:           #0B1220;   /* 主文字 — 對白底 17.8:1 */
+  --c-ink-2:         #33415C;   /* 次文字 — 對白底 9.1:1 */
+  --c-ink-3:         #5A6883;   /* 輔助文字 — 對白底 5.3:1，仍達 AA */
+  --c-border:        #C3CEDD;
+  --c-border-strong: #93A3BA;
+
+  /* ---- 品牌 ---- */
+  --c-brand:         #16324F;   /* 深海軍藍：信任、法規 */
+  --c-brand-2:       #21507D;
+  --c-brand-ink:     #FFFFFF;
+
+  /* ---- 四種閘門狀態 ----
+     色彩 + 字符 + 邊框樣式 三重編碼，確保色盲可辨識  */
+  --s-red:        #B3151B;
+  --s-red-bg:     #FDF0F0;
+  --s-red-soft:   #F6D4D5;
+  --s-red-ink:    #FFFFFF;
+
+  --s-amber:      #96590A;   /* 加深至可承載白字並達 AA */
+  --s-amber-bg:   #FDF5E7;
+  --s-amber-soft: #F5E1BE;
+  --s-amber-ink:  #FFFFFF;
+
+  --s-green:      #17663C;
+  --s-green-bg:   #EDF7F1;
+  --s-green-soft: #C6E3D2;
+  --s-green-ink:  #FFFFFF;
+
+  --s-blue:       #1D4E96;
+  --s-blue-bg:    #EFF4FC;
+  --s-blue-soft:  #C9DAF3;
+  --s-blue-ink:   #FFFFFF;
+
+  /* ---- 排版 ---- */
+  --font-sans: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'Noto Sans TC', ui-monospace, monospace;
+
+  --t-xs:   0.8125rem;  /* 13px — 僅用於標籤，不用於內文 */
+  --t-sm:   0.9375rem;  /* 15px */
+  --t-base: 1.0625rem;  /* 17px — 內文下限，PDF 縮放後仍可讀 */
+  --t-md:   1.1875rem;  /* 19px */
+  --t-lg:   1.4375rem;  /* 23px */
+  --t-xl:   1.75rem;    /* 28px */
+  --t-2xl:  2.25rem;    /* 36px */
+  --t-3xl:  2.875rem;   /* 46px */
+
+  /* ---- 間距 (4pt 節奏) ---- */
+  --sp-1: 4px;   --sp-2: 8px;   --sp-3: 12px;  --sp-4: 16px;
+  --sp-5: 20px;  --sp-6: 24px;  --sp-8: 32px;  --sp-10: 40px;
+  --sp-12: 48px; --sp-16: 64px;
+
+  --r-sm: 4px;  --r-md: 8px;  --r-lg: 12px;  --r-xl: 16px;
+
+  --shadow-1: 0 1px 2px rgba(11, 18, 32, 0.06), 0 1px 3px rgba(11, 18, 32, 0.08);
+  --shadow-2: 0 2px 4px rgba(11, 18, 32, 0.06), 0 4px 12px rgba(11, 18, 32, 0.09);
+  --shadow-3: 0 8px 24px rgba(11, 18, 32, 0.14);
+
+  --dur: 200ms;
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 狀態作用域：任何元素加上 data-state 即繼承整組狀態色 */
+[data-state='RED']   { --st: var(--s-red);   --st-bg: var(--s-red-bg);   --st-soft: var(--s-red-soft);   --st-ink: var(--s-red-ink); }
+[data-state='AMBER'] { --st: var(--s-amber); --st-bg: var(--s-amber-bg); --st-soft: var(--s-amber-soft); --st-ink: var(--s-amber-ink); }
+[data-state='GREEN'] { --st: var(--s-green); --st-bg: var(--s-green-bg); --st-soft: var(--s-green-soft); --st-ink: var(--s-green-ink); }
+[data-state='BLUE']  { --st: var(--s-blue);  --st-bg: var(--s-blue-bg);  --st-soft: var(--s-blue-soft);  --st-ink: var(--s-blue-ink); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
