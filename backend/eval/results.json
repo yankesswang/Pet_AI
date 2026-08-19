@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-19T16:22:47.118260",
+  "generated_at": "2026-08-19T16:47:10.633678",
   "as_of": "2026-08-19",
   "case_bank": {
     "emergency": 40,
@@ -17,7 +17,11 @@
     "knowledge_source": "file:demo_products.json",
     "product_count": 200,
     "date_only_expired_count": 20,
-    "llm_in_gate_path": false
+    "llm_in_gate_path": false,
+    "llm_structuring": "on",
+    "llm_translation": "on",
+    "llm_key_present": true,
+    "llm_model": "gpt-4o-mini"
   },
   "metrics": [
     {

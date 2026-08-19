@@ -428,6 +428,11 @@ class Evaluator:
                 "product_count": self.kb.stats["product_count"],
                 "date_only_expired_count": self.kb.stats["date_only_expired_count"],
                 "llm_in_gate_path": False,
+                # 記錄本次評測是否啟用 LLM 輔助結構化，供結果比對時區分
+                "llm_structuring": os.environ.get("VETLINK_LLM_STRUCTURING", "off"),
+                "llm_translation": os.environ.get("VETLINK_LLM_TRANSLATION", "off"),
+                "llm_key_present": bool(os.environ.get("OPENAI_API_KEY")),
+                "llm_model": os.environ.get("OPENAI_MODEL", ""),
             },
             "metrics": [m.to_dict() for m in metrics],
             "not_measured": [
