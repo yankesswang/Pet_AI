@@ -3,3 +3,6 @@ dist
 .env
 .env.local
 *.log
+
+# Vite 暫存檔
+vite.config.ts.timestamp-*.mjs
