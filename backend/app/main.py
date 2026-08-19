@@ -7,6 +7,17 @@
 from __future__ import annotations
 
 from fastapi import FastAPI
+
+# 專案根目錄的 .env 於啟動時載入，讓 OPENAI_API_KEY 等設定不必手動 export。
+# 已存在的環境變數優先，CI／容器可直接覆寫。
+try:
+    from dotenv import load_dotenv
+    from pathlib import Path
+
+    load_dotenv(Path(__file__).resolve().parents[2] / ".env", override=False)
+except ImportError:  # python-dotenv 未安裝時沿用純環境變數
+    pass
+
 from fastapi.middleware.cors import CORSMiddleware
 
 from .api.routes import router
