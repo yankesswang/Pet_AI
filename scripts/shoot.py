@@ -2,7 +2,7 @@
 import json, subprocess, time, base64, urllib.request, os, sys, shutil
 import websocket
 
-URL = os.environ.get("SHOOT_URL", "http://localhost:4173/")
+URL = os.environ.get("SHOOT_URL", "http://localhost:5173/")
 OUT = os.environ.get("SHOOT_OUT", "/home/trx50/Project/Pet_AI/docs/screenshots")
 PORT = 9222
 VIEWS = [("overview","00_overview"),("act1","01_act1_red"),("amber","02_amber"),
