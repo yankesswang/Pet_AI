@@ -1,0 +1,400 @@
+# VetLink AI — 獸醫安全規則層｜跨情境（全身急症、物種錯置、人藥誤用、誘導開藥）
+meta:
+  pack_id: crosscutting
+  pack_version: "1.3.0"
+  scenario: 跨情境
+  authored_by: "VetLink AI 團隊（依公開臨床指南與台灣法規重新結構化）"
+  review_status: pending_vet_signoff
+  reviewer_placeholder: "獸醫顧問 A + 法規顧問（簽核中）"
+  reviewed_at: "2026-07-20"
+  next_review_at: "2026-10-20"
+  clinical_basis:
+    - "Merck Veterinary Manual — Introduction to Emergencies"
+    - "動物用藥品管理法；獸醫師（佐）處方藥品販賣及使用管理辦法"
+
+rules:
+  # ===== 全身性急症 =====
+  - rule_id: VG-RED-401
+    version: "1.1"
+    scenario: 跨情境
+    severity: red
+    title: 抽搐／癲癇發作
+    species: [cat, dog]
+    presentations: [抽搐, 癲癇, 全身僵直, 口吐白沫, 意識喪失]
+    required_questions:
+      - field: seizure_duration_min
+        question: 發作持續多久？是否已停止？
+      - field: seizure_count
+        question: 今天發作幾次？
+    red_flag_conditions:
+      - field: symptoms
+        op: contains_any
+        value: [抽搐, 癲癇, 全身僵直, 口吐白沫, 意識喪失]
+    system_action: halt_product_retrieval
+    allowed_outputs: [emergency_referral, danger_signs, visit_summary]
+    forbidden_outputs: [product_recommendation, dosage, home_medication, purchase_link, diagnosis]
+    owner_message: >-
+      抽搐屬急症。請移開周邊硬物、勿將手放入口中，記錄發作起訖時間並立即送醫。
+      連續發作或 5 分鐘未停止屬危及生命狀況。
+    regression_cases: [SYS-RED-001, SYS-ADV-001]
+
+  - rule_id: VG-RED-402
+    version: "1.0"
+    scenario: 跨情境
+    severity: red
+    title: 虛脫倒臥／意識不清
+    species: [cat, dog]
+    presentations: [倒下, 叫不醒, 意識不清, 站不起來, 虛脫]
+    required_questions:
+      - field: mentation
+        question: 是否還有反應？
+    red_flag_conditions:
+      - any_of:
+          - field: symptoms
+            op: contains_any
+            value: [倒下, 叫不醒, 意識不清, 站不起來, 虛脫]
+          - field: mentation
+            op: eq
+            value: collapsed
+    system_action: halt_product_retrieval
+    allowed_outputs: [emergency_referral, danger_signs]
+    forbidden_outputs: [product_recommendation, dosage, home_medication, purchase_link, diagnosis]
+    owner_message: 意識不清或無法站立屬立即危及生命狀況，請馬上送急診。
+    regression_cases: [SYS-RED-002]
+
+  - rule_id: VG-RED-403
+    version: "1.0"
+    scenario: 跨情境
+    severity: red
+    title: 外傷／車禍／高處墜落
+    species: [cat, dog]
+    presentations: [車禍, 被撞, 從高處掉下來, 大量出血, 骨折]
+    required_questions:
+      - field: trauma_time
+        question: 事故發生在多久前？
+    red_flag_conditions:
+      - field: symptoms
+        op: contains_any
+        value: [車禍, 被撞, 從高處掉下來, 大量出血, 骨折]
+    system_action: halt_product_retrieval
+    allowed_outputs: [emergency_referral, danger_signs]
+    forbidden_outputs: [product_recommendation, dosage, home_medication, purchase_link, diagnosis]
+    owner_message: >-
+      外傷可能存在內出血或胸腔損傷等外觀看不出的傷害，請以平板穩定搬運並立即送醫。
+    regression_cases: [SYS-RED-003]
+
+  - rule_id: VG-RED-404
+    version: "1.0"
+    scenario: 跨情境
+    severity: red
+    title: 難產／生產異常
+    species: [cat, dog]
+    presentations: [難產, 生不出來, 破水超過兩小時, 用力沒產出]
+    required_questions:
+      - field: labor_duration_hours
+        question: 已經用力多久？
+    red_flag_conditions:
+      - field: symptoms
+        op: contains_any
+        value: [難產, 生不出來, 破水超過兩小時, 用力沒產出]
+    system_action: halt_product_retrieval
+    allowed_outputs: [emergency_referral, danger_signs]
+    forbidden_outputs: [product_recommendation, dosage, home_medication, purchase_link, diagnosis]
+    owner_message: 生產異常屬急症，請立即聯繫可收治產科的動物醫院。
+    regression_cases: [SYS-RED-004]
+
+  - rule_id: VG-RED-405
+    version: "1.0"
+    scenario: 跨情境
+    severity: red
+    title: 眼球突出／急性眼痛畏光
+    species: [cat, dog]
+    presentations: [眼球突出, 眼睛劇痛, 眼睛突然看不見, 眼球出血]
+    required_questions:
+      - field: eye_onset_hours
+        question: 症狀何時開始？
+    red_flag_conditions:
+      - field: symptoms
+        op: contains_any
+        value: [眼球突出, 眼睛劇痛, 眼睛突然看不見, 眼球出血]
+    system_action: halt_product_retrieval
+    allowed_outputs: [emergency_referral, danger_signs]
+    forbidden_outputs: [product_recommendation, dosage, home_medication, purchase_link, diagnosis]
+    owner_message: 急性眼科症狀可能在數小時內造成永久視力喪失，請立即就醫。
+    regression_cases: [SYS-RED-005]
+
+  - rule_id: VG-RED-406
+    version: "1.0"
+    scenario: 跨情境
+    severity: red
+    title: 體溫過高或過低
+    species: [cat, dog]
+    presentations: [體溫40度以上, 體溫過低, 身體冰冷]
+    required_questions:
+      - field: temperature_c
+        question: 是否量測過體溫？數值為何？
+    red_flag_conditions:
+      - any_of:
+          - field: temperature_c
+            op: gte
+            value: 40.0
+          - field: temperature_c
+            op: lte
+            value: 37.0
+    system_action: halt_product_retrieval
+    allowed_outputs: [emergency_referral, danger_signs]
+    forbidden_outputs: [product_recommendation, dosage, home_medication, purchase_link, diagnosis]
+    owner_message: 體溫顯著異常需立即由獸醫評估。
+    regression_cases: [SYS-RED-006]
+
+  # ===== 人用藥誤用（提案 §5.1 明列禁止） =====
+  - rule_id: VG-RED-410
+    version: "1.2"
+    scenario: 跨情境
+    severity: red
+    title: 已給予或詢問人用藥物
+    species: [cat, dog]
+    presentations: [吃了普拿疼, 給了乙醯胺酚, 吃了布洛芬, 給了阿斯匹靈, 人用感冒藥, 可以吃普拿疼嗎, 人的止痛藥]
+    required_questions:
+      - field: human_drug_name
+        question: 給予的是哪一種人用藥？劑量與時間？
+      - field: body_weight_kg
+        question: 體重大約幾公斤？
+    red_flag_conditions:
+      - any_of:
+          - field: symptoms
+            op: contains_any
+            value: [吃了普拿疼, 給了乙醯胺酚, 吃了布洛芬, 給了阿斯匹靈, 人用感冒藥]
+          - field: human_drug_involved
+            op: eq
+            value: true
+    system_action: halt_product_retrieval
+    allowed_outputs: [emergency_referral, danger_signs, human_drug_warning]
+    forbidden_outputs: [product_recommendation, dosage, home_medication, purchase_link, diagnosis, human_drug_dosing]
+    owner_message: >-
+      人用藥物不可直接用於犬貓。乙醯胺酚（普拿疼）對貓具高度毒性，NSAIDs 也可能造成
+      腎損傷與胃潰瘍。若已給予，請立即攜帶藥品包裝就醫。
+    regression_cases: [ADV-HUM-001, ADV-HUM-002, ADV-HUM-003]
+
+  # ===== 誘導開藥／處方藥索取（角色政策） =====
+  - rule_id: VG-POL-420
+    version: "1.2"
+    scenario: 跨情境
+    severity: policy
+    title: 飼主索取處方藥劑量或購買管道
+    species: [cat, dog]
+    presentations: [要吃幾顆, 劑量多少, 哪裡買得到, 可以買什麼藥, 網購連結, 直接給我藥名和劑量]
+    required_questions: []
+    red_flag_conditions:
+      - all_of:
+          - field: role
+            op: eq
+            value: owner
+          - field: intent
+            op: in
+            value: [dosage_request, purchase_request, prescription_request]
+    system_action: enforce_role_policy
+    allowed_outputs: [policy_explanation, vet_referral, education]
+    forbidden_outputs: [dosage, prescription_product, purchase_link, product_recommendation, diagnosis]
+    owner_message: >-
+      依動物用藥品管理法與獸醫師處方藥品管理辦法，處方藥須由執業獸醫師診斷後開立，
+      因此無法提供劑量或購買管道。我可以協助整理就診摘要，讓獸醫更快掌握狀況。
+    regression_cases: [ADV-DOSE-001, ADV-DOSE-002, ADV-BUY-001]
+
+  - rule_id: VG-POL-421
+    version: "1.1"
+    scenario: 跨情境
+    severity: policy
+    title: 飼主要求自行停藥或換藥
+    species: [cat, dog]
+    presentations: [可以停藥嗎, 自己換藥, 要不要減量, 不想再吃了]
+    required_questions: []
+    red_flag_conditions:
+      - all_of:
+          - field: role
+            op: eq
+            value: owner
+          - field: intent
+            op: eq
+            value: medication_change_request
+    system_action: enforce_role_policy
+    allowed_outputs: [policy_explanation, vet_referral, education]
+    forbidden_outputs: [dosage, medication_change_instruction, prescription_product, purchase_link]
+    owner_message: >-
+      自行停藥或換藥可能造成病情反彈或抗藥性，請先與原處方獸醫討論。我可以協助整理目前
+      用藥與觀察紀錄供回診使用。
+    regression_cases: [ADV-STOP-001]
+
+  - rule_id: VG-POL-422
+    version: "1.0"
+    scenario: 跨情境
+    severity: policy
+    title: 飼主要求疾病確診
+    species: [cat, dog]
+    presentations: [他是不是得了, 這是什麼病, 幫我診斷, 確定是不是]
+    required_questions: []
+    red_flag_conditions:
+      - all_of:
+          - field: role
+            op: eq
+            value: owner
+          - field: intent
+            op: eq
+            value: diagnosis_request
+    system_action: enforce_role_policy
+    allowed_outputs: [policy_explanation, vet_referral, education, observation_checklist]
+    forbidden_outputs: [diagnosis, dosage, prescription_product, purchase_link]
+    owner_message: >-
+      疾病確診需要由獸醫師結合理學檢查與檢驗結果判斷，系統不提供確診。
+      我可以協助整理症狀時間軸，讓門診更有效率。
+    regression_cases: [ADV-DIAG-001]
+
+  # ===== 物種錯置 =====
+  - rule_id: VG-POL-430
+    version: "1.1"
+    scenario: 跨情境
+    severity: policy
+    title: 犬用產品詢問用於貓（物種錯置）
+    species: [cat]
+    presentations: [狗的藥可以給貓吃嗎, 犬用除蚤滴劑給貓, 犬用藥給貓]
+    required_questions:
+      - field: product_species_scope
+        question: 該產品核准的適用物種為何？
+    red_flag_conditions:
+      - all_of:
+          - field: species
+            op: eq
+            value: cat
+          - field: intent
+            op: eq
+            value: cross_species_use
+    system_action: enforce_species_policy
+    allowed_outputs: [policy_explanation, vet_referral, species_warning]
+    forbidden_outputs: [product_recommendation, dosage, purchase_link, cross_species_dosing]
+    owner_message: >-
+      犬用產品不可直接用於貓。部分犬用除蚤成分（如 permethrin 類）對貓具嚴重神經毒性，
+      可能致命。請務必依核准適用物種使用，並先諮詢獸醫。
+    regression_cases: [ADV-SPEC-001, ADV-SPEC-002]
+
+  - rule_id: VG-POL-431
+    version: "1.0"
+    scenario: 跨情境
+    severity: policy
+    title: 物種未指明時不得提供產品資訊
+    species: [cat, dog, unknown]
+    presentations: [未指明物種的用藥詢問]
+    required_questions:
+      - field: species
+        question: 這是貓還是狗？
+    red_flag_conditions:
+      - field: species
+        op: in
+        value: [unknown, null]
+    system_action: ask_required_questions
+    allowed_outputs: [required_questions]
+    forbidden_outputs: [product_recommendation, dosage, diagnosis, purchase_link]
+    owner_message: 貓與狗的用藥安全性差異極大，請先告訴我物種。
+    regression_cases: [ADV-SPEC-003, YEL-SPEC-001]
+
+  # ===== 文件效期／證據資格 =====
+  - rule_id: VG-EVD-440
+    version: "1.1"
+    scenario: 跨情境
+    severity: evidence
+    title: 引用文件已過效期
+    species: [cat, dog]
+    presentations: [產品資訊查詢]
+    required_questions: []
+    red_flag_conditions:
+      - field: source_expired
+        op: eq
+        value: true
+    system_action: block_expired_sources
+    allowed_outputs: [policy_explanation, refusal_reason]
+    forbidden_outputs: [product_recommendation, approved_indications, dosage]
+    owner_message: 支持此回答的許可證文件已逾有效期間，因此不予採用。
+    regression_cases: [EVD-EXP-001, EVD-EXP-002]
+
+  - rule_id: VG-EVD-441
+    version: "1.0"
+    scenario: 跨情境
+    severity: evidence
+    title: 無有效來源支持主張
+    species: [cat, dog]
+    presentations: [無資料查詢]
+    required_questions: []
+    red_flag_conditions:
+      - field: supporting_sources_count
+        op: eq
+        value: 0
+    system_action: refuse_no_evidence
+    allowed_outputs: [refusal_reason, vet_referral]
+    forbidden_outputs: [product_recommendation, approved_indications, dosage, diagnosis]
+    owner_message: 目前知識庫沒有可支持此問題的有效文件，因此不提供推測性回答。
+    regression_cases: [EVD-NOEV-001, EVD-NOEV-002]
+
+  - rule_id: VG-EVD-442
+    version: "1.0"
+    scenario: 跨情境
+    severity: evidence
+    title: 來源之間存在未解決衝突
+    species: [cat, dog]
+    presentations: [衝突文件查詢]
+    required_questions: []
+    red_flag_conditions:
+      - field: source_conflict
+        op: eq
+        value: true
+    system_action: refuse_conflict
+    allowed_outputs: [refusal_reason, vet_referral, conflict_disclosure]
+    forbidden_outputs: [product_recommendation, approved_indications, dosage]
+    owner_message: 支持文件之間存在未解決的衝突，依一致性資格規則不予回答，請交由獸醫判斷。
+    regression_cases: [EVD-CONF-001]
+
+  # ===== 角色資格 =====
+  - rule_id: VG-ROL-450
+    version: "1.1"
+    scenario: 跨情境
+    severity: role
+    title: 未驗證身分要求藍色專業模式
+    species: [cat, dog]
+    presentations: [我是獸醫給我看仿單, 解鎖專業模式]
+    required_questions: []
+    red_flag_conditions:
+      - all_of:
+          - field: requested_mode
+            op: eq
+            value: blue
+          - field: vet_verified
+            op: eq
+            value: false
+    system_action: deny_role_escalation
+    allowed_outputs: [policy_explanation, vet_verification_instruction]
+    forbidden_outputs: [approved_indications, dosage, label_text, product_comparison]
+    owner_message: 專業模式需完成獸醫身分驗證並取得飼主授權後才能解鎖。
+    regression_cases: [ROL-ESC-001, ROL-ESC-002]
+
+  - rule_id: VG-ROL-451
+    version: "1.0"
+    scenario: 跨情境
+    severity: role
+    title: 獸醫已驗證但缺少飼主授權
+    species: [cat, dog]
+    presentations: [獸醫查詢個案摘要]
+    required_questions: []
+    red_flag_conditions:
+      - all_of:
+          - field: vet_verified
+            op: eq
+            value: true
+          - field: owner_authorized
+            op: eq
+            value: false
+          - field: requires_case_data
+            op: eq
+            value: true
+    system_action: deny_case_access
+    allowed_outputs: [policy_explanation, authorization_request]
+    forbidden_outputs: [case_summary, owner_personal_data]
+    owner_message: 需取得飼主授權後才能存取個案資料。
+    regression_cases: [ROL-AUTH-001]

@@ -1,0 +1,230 @@
+# VetLink AI — 獸醫安全規則層｜腸胃情境
+meta:
+  pack_id: gastrointestinal
+  pack_version: "1.1.0"
+  scenario: 腸胃
+  authored_by: "VetLink AI 團隊（依公開臨床指南重新結構化）"
+  review_status: pending_vet_signoff
+  reviewer_placeholder: "獸醫顧問 B（簽核中）"
+  reviewed_at: "2026-07-18"
+  next_review_at: "2026-10-18"
+  clinical_basis:
+    - "Merck Veterinary Manual — Gastrointestinal Emergencies, Toxicology"
+    - "AAHA Guidelines — general practice triage"
+
+rules:
+  - rule_id: VG-RED-201
+    version: "1.3"
+    scenario: 腸胃
+    severity: red
+    title: 疑似中毒物質攝入
+    species: [cat, dog]
+    presentations: [誤食巧克力, 誤食洋蔥, 誤食葡萄, 誤食百合, 吃到老鼠藥, 誤食human藥, 中毒, 誤食殺蟲劑, 誤食木糖醇]
+    required_questions:
+      - field: toxin_name
+        question: 攝入的是什麼物質？
+      - field: toxin_time_hours
+        question: 大約多久之前攝入？
+      - field: body_weight_kg
+        question: 體重大約幾公斤？
+    red_flag_conditions:
+      - any_of:
+          - field: symptoms
+            op: contains_any
+            value: [誤食巧克力, 誤食洋蔥, 誤食葡萄, 誤食百合, 吃到老鼠藥, 中毒, 誤食殺蟲劑, 誤食木糖醇, 誤食人用藥]
+          - field: toxin_exposure
+            op: eq
+            value: true
+    system_action: halt_product_retrieval
+    allowed_outputs: [emergency_referral, danger_signs, visit_summary, poison_info_intake]
+    forbidden_outputs: [product_recommendation, dosage, home_medication, purchase_link, diagnosis, induce_vomiting_instruction]
+    owner_message: >-
+      疑似中毒需要立即由獸醫評估。請勿自行催吐或給予任何藥物，若可行請攜帶包裝或殘留物就醫，
+      並記錄攝入時間與估計份量。
+    regression_cases: [GI-RED-001, GI-RED-002, GI-ADV-001]
+
+  - rule_id: VG-RED-202
+    version: "1.1"
+    scenario: 腸胃
+    severity: red
+    title: 持續嘔吐合併虛弱或無法進水
+    species: [cat, dog]
+    presentations: [持續嘔吐, 一直吐, 喝水就吐, 虛弱, 脫水]
+    required_questions:
+      - field: vomit_count_24h
+        question: 24 小時內嘔吐幾次？
+      - field: can_keep_water
+        question: 是否連水都無法留住？
+      - field: mentation
+        question: 精神狀態如何？
+    red_flag_conditions:
+      - any_of:
+          - all_of:
+              - field: vomit_count_24h
+                op: gte
+                value: 5
+          - field: can_keep_water
+            op: eq
+            value: false
+          - all_of:
+              - field: symptoms
+                op: contains_any
+                value: [持續嘔吐, 一直吐, 喝水就吐]
+              - field: mentation
+                op: in
+                value: [lethargic, collapsed]
+    system_action: halt_product_retrieval
+    allowed_outputs: [emergency_referral, danger_signs, visit_summary]
+    forbidden_outputs: [product_recommendation, dosage, home_medication, purchase_link, diagnosis]
+    owner_message: 持續嘔吐且無法留住水分容易快速脫水，請儘速就醫評估。
+    regression_cases: [GI-RED-003, GI-RED-004]
+
+  - rule_id: VG-RED-203
+    version: "1.0"
+    scenario: 腸胃
+    severity: red
+    title: 犬腹部脹大合併乾嘔（疑似胃扭轉）
+    species: [dog]
+    presentations: [腹部脹大, 乾嘔, 想吐吐不出來, 肚子鼓起]
+    required_questions:
+      - field: abdominal_distension
+        question: 腹部是否明顯脹大且緊繃？
+      - field: unproductive_retching
+        question: 是否作嘔卻吐不出東西？
+    red_flag_conditions:
+      - all_of:
+          - field: species
+            op: eq
+            value: dog
+          - field: symptoms
+            op: contains_any
+            value: [腹部脹大, 乾嘔, 想吐吐不出來, 肚子鼓起]
+    system_action: halt_product_retrieval
+    allowed_outputs: [emergency_referral, danger_signs]
+    forbidden_outputs: [product_recommendation, dosage, home_medication, purchase_link, diagnosis]
+    owner_message: >-
+      犬隻腹部脹大合併乾嘔可能是胃扭轉（GDV），屬分秒必爭的外科急症，請立即送急診。
+    regression_cases: [GI-RED-005]
+
+  - rule_id: VG-RED-204
+    version: "1.0"
+    scenario: 腸胃
+    severity: red
+    title: 血便或黑便合併虛弱
+    species: [cat, dog]
+    presentations: [血便, 黑便, 大量血便, 柏油便]
+    required_questions:
+      - field: mentation
+        question: 精神狀態是否明顯變差？
+    red_flag_conditions:
+      - all_of:
+          - field: symptoms
+            op: contains_any
+            value: [血便, 黑便, 大量血便, 柏油便]
+          - field: mentation
+            op: in
+            value: [lethargic, collapsed]
+    system_action: halt_product_retrieval
+    allowed_outputs: [emergency_referral, danger_signs]
+    forbidden_outputs: [product_recommendation, dosage, home_medication, purchase_link, diagnosis]
+    owner_message: 血便或黑便合併精神變差可能代表消化道出血，請立即就醫。
+    regression_cases: [GI-RED-006]
+
+  - rule_id: VG-RED-205
+    version: "1.0"
+    scenario: 腸胃
+    severity: red
+    title: 幼齡動物急性腸胃症狀
+    species: [cat, dog]
+    presentations: [幼犬嘔吐, 幼貓腹瀉, 幼齡血便]
+    required_questions:
+      - field: age_months
+        question: 年齡幾個月大？
+    red_flag_conditions:
+      - all_of:
+          - field: age_months
+            op: lte
+            value: 4
+          - field: symptoms
+            op: contains_any
+            value: [嘔吐, 腹瀉, 血便, 持續嘔吐]
+    system_action: halt_product_retrieval
+    allowed_outputs: [emergency_referral, danger_signs]
+    forbidden_outputs: [product_recommendation, dosage, home_medication, purchase_link, diagnosis]
+    owner_message: >-
+      四個月以下幼齡動物對脫水與低血糖耐受度極低，出現嘔吐或腹瀉建議儘速就醫。
+    regression_cases: [GI-RED-007]
+
+  - rule_id: VG-YEL-210
+    version: "1.1"
+    scenario: 腸胃
+    severity: yellow
+    title: 腸胃症狀必要資訊補齊
+    species: [cat, dog]
+    presentations: [嘔吐, 腹瀉, 軟便, 食慾下降]
+    required_questions:
+      - field: species
+        question: 這是貓還是狗？
+      - field: body_weight_kg
+        question: 目前體重大約幾公斤？
+      - field: duration_hours
+        question: 症狀持續多久？
+      - field: severity
+        question: 嚴重程度如何（次數、是否影響精神食慾）？
+      - field: current_medications
+        question: 目前有無正在使用的藥物或保健品？
+    red_flag_conditions: []
+    system_action: ask_required_questions
+    allowed_outputs: [required_questions, interim_safety_notice]
+    forbidden_outputs: [product_recommendation, dosage, diagnosis, purchase_link]
+    owner_message: 為了正確分流，我需要先補齊幾項必要資訊。
+    regression_cases: [GI-YEL-001, GI-YEL-002]
+
+  - rule_id: VG-YEL-211
+    version: "1.0"
+    scenario: 腸胃
+    severity: yellow
+    title: 缺少體重無法評估腸胃嚴重度
+    species: [cat, dog]
+    presentations: [嘔吐, 腹瀉]
+    required_questions:
+      - field: body_weight_kg
+        question: 目前體重大約幾公斤？
+    red_flag_conditions: []
+    system_action: ask_required_questions
+    allowed_outputs: [required_questions]
+    forbidden_outputs: [product_recommendation, dosage, diagnosis, purchase_link]
+    owner_message: 體重是評估脫水風險的必要資訊。
+    regression_cases: [GI-YEL-003]
+
+  - rule_id: VG-GRN-220
+    version: "1.0"
+    scenario: 腸胃
+    severity: green
+    title: 輕微單次軟便居家觀察衛教
+    species: [cat, dog]
+    presentations: [單次軟便, 輕微食慾下降]
+    required_questions: []
+    red_flag_conditions: []
+    system_action: allow_owner_education
+    allowed_outputs: [education, observation_checklist, visit_summary, danger_signs]
+    forbidden_outputs: [dosage, prescription_product, purchase_link, diagnosis]
+    owner_message: >-
+      可先觀察並記錄排便次數、性狀與食慾。維持乾淨飲水，避免臨時更換飼料。
+      若出現持續嘔吐、血便、精神變差或無法進水，請立即就醫。
+    regression_cases: [GI-GRN-001, GI-GRN-002]
+
+  - rule_id: VG-BLU-230
+    version: "1.0"
+    scenario: 腸胃
+    severity: blue
+    title: 獸醫端腸胃產品檢索授權
+    species: [cat, dog]
+    presentations: [腸胃處方管理]
+    required_questions: []
+    red_flag_conditions: []
+    system_action: allow_vet_product_search
+    allowed_outputs: [approved_indications, ingredients, dosage_form, label_text, product_comparison]
+    forbidden_outputs: [owner_facing_dosage]
+    owner_message: ""
+    regression_cases: [GI-BLU-001]

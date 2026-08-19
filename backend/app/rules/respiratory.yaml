@@ -1,0 +1,168 @@
+# VetLink AI — 獸醫安全規則層｜呼吸情境
+meta:
+  pack_id: respiratory
+  pack_version: "1.1.0"
+  scenario: 呼吸
+  authored_by: "VetLink AI 團隊（依公開臨床指南重新結構化）"
+  review_status: pending_vet_signoff
+  reviewer_placeholder: "獸醫顧問 A（簽核中）"
+  reviewed_at: "2026-07-15"
+  next_review_at: "2026-10-15"
+  clinical_basis:
+    - "Merck Veterinary Manual — Respiratory Emergencies / Dyspnea"
+    - "WSAVA Global Guidelines — emergency triage"
+
+rules:
+  - rule_id: VG-RED-101
+    version: "1.2"
+    scenario: 呼吸
+    severity: red
+    title: 呼吸困難／開口呼吸／黏膜發紺
+    species: [cat, dog]
+    presentations: [呼吸困難, 開口呼吸, 張口呼吸, 呼吸費力, 舌頭發紫, 牙齦發白, 黏膜發紺, 喘不過氣]
+    required_questions:
+      - field: breathing_effort
+        question: 呼吸時是否明顯費力、腹部用力或開口呼吸？
+      - field: mucous_membrane_color
+        question: 舌頭或牙齦顏色是否發紫、發白？
+      - field: duration_hours
+        question: 這個狀況持續多久？
+    red_flag_conditions:
+      - any_of:
+          - field: symptoms
+            op: contains_any
+            value: [呼吸困難, 開口呼吸, 張口呼吸, 呼吸費力, 黏膜發紺, 舌頭發紫, 牙齦發白, 喘不過氣]
+          - field: breathing_effort
+            op: in
+            value: [labored, severe]
+          - field: mucous_membrane_color
+            op: in
+            value: [cyanotic, pale, blue, white]
+    system_action: halt_product_retrieval
+    allowed_outputs: [emergency_referral, danger_signs, visit_summary, triage_explanation]
+    forbidden_outputs: [product_recommendation, dosage, home_medication, purchase_link, diagnosis]
+    owner_message: >-
+      呼吸費力、開口呼吸或黏膜顏色異常屬於立即危及生命的徵兆。請避免過度保定與壓迫胸腹，
+      以最短時間送往可收治急診的動物醫院。貓的開口呼吸尤其危險。
+    regression_cases: [RES-RED-001, RES-RED-002, RES-ADV-001]
+
+  - rule_id: VG-RED-102
+    version: "1.0"
+    scenario: 呼吸
+    severity: red
+    title: 貓開口呼吸（獨立高危規則）
+    species: [cat]
+    presentations: [開口呼吸, 張口呼吸, 用嘴巴呼吸]
+    required_questions:
+      - field: breathing_effort
+        question: 貓是否持續用嘴巴呼吸？
+    red_flag_conditions:
+      - all_of:
+          - field: species
+            op: eq
+            value: cat
+          - field: symptoms
+            op: contains_any
+            value: [開口呼吸, 張口呼吸, 用嘴巴呼吸]
+    system_action: halt_product_retrieval
+    allowed_outputs: [emergency_referral, danger_signs]
+    forbidden_outputs: [product_recommendation, dosage, home_medication, purchase_link, diagnosis]
+    owner_message: 貓咪正常不會用嘴巴呼吸，出現此情況需立即急診評估。
+    regression_cases: [RES-RED-003]
+
+  - rule_id: VG-RED-103
+    version: "1.0"
+    scenario: 呼吸
+    severity: red
+    title: 疑似異物阻塞氣道
+    species: [cat, dog]
+    presentations: [噎到, 異物卡喉, 抓喉嚨, 突然無法呼吸]
+    required_questions:
+      - field: duration_hours
+        question: 是否為突然發生？
+    red_flag_conditions:
+      - field: symptoms
+        op: contains_any
+        value: [噎到, 異物卡喉, 抓喉嚨, 突然無法呼吸]
+    system_action: halt_product_retrieval
+    allowed_outputs: [emergency_referral, danger_signs]
+    forbidden_outputs: [product_recommendation, dosage, home_medication, purchase_link, diagnosis]
+    owner_message: 疑似呼吸道異物阻塞，請立即前往最近的動物醫院。
+    regression_cases: [RES-RED-004]
+
+  - rule_id: VG-RED-104
+    version: "1.0"
+    scenario: 呼吸
+    severity: red
+    title: 中暑合併呼吸急促
+    species: [cat, dog]
+    presentations: [中暑, 熱衰竭, 高溫下喘不停, 體溫過高]
+    required_questions:
+      - field: heat_exposure
+        question: 近期是否處於高溫環境或車內？
+    red_flag_conditions:
+      - field: symptoms
+        op: contains_any
+        value: [中暑, 熱衰竭, 高溫下喘不停]
+    system_action: halt_product_retrieval
+    allowed_outputs: [emergency_referral, danger_signs, first_aid_cooling]
+    forbidden_outputs: [product_recommendation, dosage, home_medication, purchase_link, diagnosis]
+    owner_message: 疑似中暑，請立即移至陰涼處、以常溫水降溫並儘速送醫，勿使用冰水。
+    regression_cases: [RES-RED-005]
+
+  - rule_id: VG-YEL-110
+    version: "1.0"
+    scenario: 呼吸
+    severity: yellow
+    title: 咳嗽症狀必要資訊補齊
+    species: [cat, dog]
+    presentations: [咳嗽, 打噴嚏, 鼻涕, 倒吸氣]
+    required_questions:
+      - field: species
+        question: 這是貓還是狗？
+      - field: duration_hours
+        question: 咳嗽持續多久？
+      - field: breathing_effort
+        question: 休息時呼吸是否也覺得費力？
+      - field: appetite
+        question: 食慾與精神是否受影響？
+      - field: current_medications
+        question: 目前有無正在使用的藥物？
+    red_flag_conditions: []
+    system_action: ask_required_questions
+    allowed_outputs: [required_questions, interim_safety_notice]
+    forbidden_outputs: [product_recommendation, dosage, diagnosis, purchase_link]
+    owner_message: 咳嗽的原因差異很大，我需要先補齊幾項必要資訊。
+    regression_cases: [RES-YEL-001]
+
+  - rule_id: VG-GRN-120
+    version: "1.0"
+    scenario: 呼吸
+    severity: green
+    title: 輕微上呼吸道症狀居家觀察
+    species: [cat, dog]
+    presentations: [偶發打噴嚏, 輕微鼻涕]
+    required_questions: []
+    red_flag_conditions: []
+    system_action: allow_owner_education
+    allowed_outputs: [education, observation_checklist, visit_summary, danger_signs]
+    forbidden_outputs: [dosage, prescription_product, purchase_link, diagnosis]
+    owner_message: >-
+      可保持環境通風與適當濕度，記錄打噴嚏頻率、鼻分泌物性狀與食慾變化。
+      若出現呼吸費力、開口呼吸或食慾停止，請立即就醫。
+    regression_cases: [RES-GRN-001]
+
+  - rule_id: VG-BLU-130
+    version: "1.0"
+    scenario: 呼吸
+    severity: blue
+    title: 獸醫端呼吸道產品檢索授權
+    species: [cat, dog]
+    presentations: [呼吸道處方管理]
+    required_questions: []
+    red_flag_conditions: []
+    system_action: allow_vet_product_search
+    allowed_outputs: [approved_indications, ingredients, dosage_form, label_text, product_comparison]
+    forbidden_outputs: [owner_facing_dosage]
+    owner_message: ""
+    regression_cases: [RES-BLU-001]

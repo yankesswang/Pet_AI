@@ -1,0 +1,177 @@
+# VetLink AI — 獸醫安全規則層｜泌尿情境
+# 提案 §13.1 獸醫安全規則層 schema
+# 依 WSAVA / AAHA / Merck Veterinary Manual 重新結構化撰寫。
+# 狀態：DEMO 規則，待合作獸醫正式簽核 (review_status: pending_vet_signoff)
+meta:
+  pack_id: urinary
+  pack_version: "1.2.0"
+  scenario: 泌尿
+  authored_by: "VetLink AI 團隊（依公開臨床指南重新結構化）"
+  review_status: pending_vet_signoff
+  reviewer_placeholder: "獸醫顧問 A（簽核中）"
+  reviewed_at: "2026-07-15"
+  next_review_at: "2026-10-15"
+  clinical_basis:
+    - "Merck Veterinary Manual — Feline Lower Urinary Tract Disease / Urethral Obstruction"
+    - "AAHA/WSAVA general emergency triage guidance"
+
+rules:
+  # ===== 旗艦 Demo 規則 =====
+  - rule_id: VG-RED-001
+    version: "1.2"
+    scenario: 泌尿
+    severity: red
+    title: 貓反覆進出砂盆、排尿困難疑似尿道阻塞
+    species: [cat]
+    presentations:
+      - 反覆進出砂盆
+      - 排尿困難
+      - 頻繁蹲姿無尿
+      - 尿不出來
+      - 滴尿
+      - 血尿伴隨用力
+    required_questions:
+      - field: can_urinate
+        question: 是否還能排出尿液（哪怕只有幾滴）？
+      - field: sex
+        question: 貓咪性別為何（公貓風險顯著較高）？
+      - field: duration_hours
+        question: 這個情況持續多久了？
+      - field: vomiting
+        question: 是否合併嘔吐？
+      - field: mentation
+        question: 精神狀態如何（正常／沉鬱／虛弱倒臥）？
+    red_flag_conditions:
+      - all_of:
+          - field: species
+            op: eq
+            value: cat
+          - any_of:
+              - field: symptoms
+                op: contains_any
+                value: [反覆進出砂盆, 排尿困難, 尿不出來, 頻繁蹲姿無尿]
+      # 完全無法排尿，或伴隨全身狀況惡化 → 立即紅旗
+      - any_of:
+          - field: can_urinate
+            op: eq
+            value: false
+          - field: mentation
+            op: in
+            value: [lethargic, collapsed]
+          - field: vomiting
+            op: eq
+            value: true
+    system_action: halt_product_retrieval
+    allowed_outputs: [emergency_referral, danger_signs, visit_summary, triage_explanation]
+    forbidden_outputs: [product_recommendation, dosage, home_medication, purchase_link, diagnosis]
+    owner_message: >-
+      貓咪反覆進出砂盆卻排不出尿，可能是泌尿道阻塞。這在公貓屬於數小時內即可能危及生命的
+      急症，居家用藥無法解決阻塞，且可能延誤黃金時間。請立即前往可收治急診的動物醫院。
+    regression_cases: [URI-RED-001, URI-RED-002, URI-ADV-001, URI-NEG-001]
+
+  - rule_id: VG-RED-002
+    version: "1.0"
+    scenario: 泌尿
+    severity: red
+    title: 犬完全無尿或膀胱脹痛
+    species: [dog]
+    presentations: [尿不出來, 無尿, 腹部脹痛, 排尿困難]
+    required_questions:
+      - field: can_urinate
+        question: 是否完全無法排出尿液？
+      - field: duration_hours
+        question: 已經多久沒有排尿？
+    red_flag_conditions:
+      - all_of:
+          - field: species
+            op: eq
+            value: dog
+          - field: can_urinate
+            op: eq
+            value: false
+    system_action: halt_product_retrieval
+    allowed_outputs: [emergency_referral, danger_signs, visit_summary]
+    forbidden_outputs: [product_recommendation, dosage, home_medication, purchase_link, diagnosis]
+    owner_message: >-
+      完全無法排尿屬急症，可能造成急性腎損傷與電解質異常，請立即就醫。
+    regression_cases: [URI-RED-003]
+
+  - rule_id: VG-RED-003
+    version: "1.0"
+    scenario: 泌尿
+    severity: red
+    title: 排尿異常合併虛弱倒臥
+    species: [cat, dog]
+    presentations: [排尿困難, 虛弱, 倒臥, 體溫過低]
+    required_questions:
+      - field: mentation
+        question: 動物目前是否還能自行站立走動？
+    red_flag_conditions:
+      - all_of:
+          - field: symptoms
+            op: contains_any
+            value: [排尿困難, 尿不出來, 血尿]
+          - field: mentation
+            op: eq
+            value: collapsed
+    system_action: halt_product_retrieval
+    allowed_outputs: [emergency_referral, danger_signs]
+    forbidden_outputs: [product_recommendation, dosage, home_medication, purchase_link, diagnosis]
+    owner_message: 排尿異常合併虛弱倒臥為高度危險徵兆，請立即急診。
+    regression_cases: [URI-RED-004]
+
+  - rule_id: VG-YEL-010
+    version: "1.1"
+    scenario: 泌尿
+    severity: yellow
+    title: 泌尿症狀必要資訊補齊
+    species: [cat, dog]
+    presentations: [頻尿, 血尿, 排尿姿勢異常, 亂尿]
+    required_questions:
+      - field: species
+        question: 這是貓還是狗？
+      - field: can_urinate
+        question: 是否還能正常排出尿液？
+      - field: duration_hours
+        question: 症狀持續多久？
+      - field: sex
+        question: 性別與是否結紮？
+      - field: current_medications
+        question: 目前有無正在使用的藥物？
+    red_flag_conditions: []
+    system_action: ask_required_questions
+    allowed_outputs: [required_questions, interim_safety_notice]
+    forbidden_outputs: [product_recommendation, dosage, diagnosis, purchase_link]
+    owner_message: 為了判斷是否需要立即就醫，我需要先確認幾項必要資訊。
+    regression_cases: [URI-YEL-001, URI-YEL-002]
+
+  - rule_id: VG-GRN-020
+    version: "1.0"
+    scenario: 泌尿
+    severity: green
+    title: 泌尿道健康居家觀察衛教
+    species: [cat, dog]
+    presentations: [頻尿, 飲水量偏低, 尿量觀察]
+    required_questions: []
+    red_flag_conditions: []
+    system_action: allow_owner_education
+    allowed_outputs: [education, observation_checklist, visit_summary, danger_signs]
+    forbidden_outputs: [dosage, prescription_product, purchase_link, diagnosis]
+    owner_message: >-
+      可先記錄每日飲水量、排尿次數與尿量，維持乾淨砂盆與充足飲水，並留意是否出現用力排尿卻無尿的情況。
+    regression_cases: [URI-GRN-001]
+
+  - rule_id: VG-BLU-030
+    version: "1.0"
+    scenario: 泌尿
+    severity: blue
+    title: 獸醫端泌尿產品檢索授權
+    species: [cat, dog]
+    presentations: [泌尿道處方管理]
+    required_questions: []
+    red_flag_conditions: []
+    system_action: allow_vet_product_search
+    allowed_outputs: [approved_indications, ingredients, dosage_form, label_text, product_comparison]
+    forbidden_outputs: [owner_facing_dosage]
+    owner_message: ""
+    regression_cases: [URI-BLU-001]

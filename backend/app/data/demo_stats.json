@@ -1,0 +1,254 @@
+{
+  "generated_at": "2026-08-19T07:02:49+00:00",
+  "source_dataset": {
+    "name": "農業部動物用藥開放資料",
+    "agency": "農業部動植物防疫檢疫署",
+    "url": "https://data.moa.gov.tw/Service/OpenData/FromM/ADProData.aspx",
+    "full_record_count": 13738
+  },
+  "demo_subset_count": 200,
+  "evaluated_as_of": "2026-08-19",
+  "expiry_gate": {
+    "valid": 150,
+    "expired": 50,
+    "expired_by_marker": 30,
+    "expired_by_date_only": 20,
+    "expiry_unknown": 66
+  },
+  "companion_animal": {
+    "total": 173,
+    "valid": 132,
+    "expired": 41
+  },
+  "ccpc_records": {
+    "count_in_demo": 45,
+    "valid_in_demo": 35,
+    "expired_in_demo": 10,
+    "companion_in_demo": 23,
+    "licences": [
+      "動物藥入字第00049號",
+      "動物藥入字第01553號",
+      "動物藥入字第02102號",
+      "動物藥入字第02463號",
+      "動物藥入字第02464號",
+      "動物藥入字第02601號",
+      "動物藥入字第02602號",
+      "動物藥入字第02603號",
+      "動物藥入字第03544號",
+      "動物藥入字第03601號",
+      "動物藥入字第07270號",
+      "動物藥入字第07271號",
+      "動物藥入字第07272號",
+      "動物藥入字第07502號",
+      "動物藥製字第00123號",
+      "動物藥製字第00126號",
+      "動物藥製字第00134號",
+      "動物藥製字第00135號",
+      "動物藥製字第00136號",
+      "動物藥製字第00138號",
+      "動物藥製字第00140號",
+      "動物藥製字第00142號",
+      "動物藥製字第00145號",
+      "動物藥製字第00146號",
+      "動物藥製字第00148號",
+      "動物藥製字第00149號",
+      "動物藥製字第00151號",
+      "動物藥製字第00152號",
+      "動物藥製字第00158號",
+      "動物藥製字第00160號",
+      "動物藥製字第00165號",
+      "動物藥製字第00166號",
+      "動物藥製字第00170號",
+      "動物藥製字第00172號",
+      "動物藥製字第00173號",
+      "動物藥製字第00174號",
+      "動物藥製字第00176號",
+      "動物藥製字第00182號",
+      "動物藥製字第00184號",
+      "動物藥製字第00319號",
+      "動物藥製字第03672號",
+      "動物藥製字第03835號",
+      "動物藥製字第03869號",
+      "動物藥製字第03897號",
+      "動物藥製字第04157號"
+    ],
+    "note": "中化集團（中國化學製藥、中化合成生技）在農業部公開資料中共有 293 張許可證（161 有效 / 132 失效）。Demo 依伴侶動物與有效期優先取代表樣本，並刻意保留失效品項以展示效期閘門。所有欄位皆來自公開資料，未虛構任何品項；中化內部核准仿單為入圍後的正式介接項目，不在本 Demo 範圍。"
+  },
+  "species_counts": {
+    "犬": 163,
+    "貓": 74,
+    "豬": 57,
+    "牛": 52,
+    "馬": 38,
+    "羊": 33,
+    "雞": 13,
+    "火雞": 9,
+    "兔": 5,
+    "鴿": 2,
+    "蜂": 1
+  },
+  "dosage_forms": {
+    "注射劑(注射劑)": 40,
+    "生物製劑(固體)": 36,
+    "錠劑": 27,
+    "外用液劑": 21,
+    "注射劑(滅菌懸劑)": 11,
+    "生物製劑(液體)": 10,
+    "原料藥(散劑)": 8,
+    "條帶劑": 8,
+    "注射液": 7,
+    "軟膏劑": 6,
+    "注射劑(乾粉注射劑)": 4,
+    "口服液劑": 4
+  },
+  "selection_reasons": {
+    "companion_valid": 110,
+    "livestock_雞": 1,
+    "companion_expired_marked": 20,
+    "ccpc_expired": 10,
+    "livestock_豬": 4,
+    "companion_expired_date_only": 20,
+    "ccpc_companion_valid": 20,
+    "ccpc_valid": 15
+  },
+  "demo_hooks": {
+    "expired_marked_examples": [
+      {
+        "doc_id": "MOA-AD-00022",
+        "licence_no": "動物藥入字第00022號",
+        "name_zh": "沙氏預防犬瘟熱及傳染性肝炎混合疫苗",
+        "expiry_date_iso": "1987-06-01",
+        "expiry_date_raw": "至76年06月01日止(已失效)"
+      },
+      {
+        "doc_id": "MOA-AD-00098",
+        "licence_no": "動物藥入字第00098號",
+        "name_zh": "保畜命注射液",
+        "expiry_date_iso": "2000-05-01",
+        "expiry_date_raw": "至89年05月01日止(已失效)"
+      },
+      {
+        "doc_id": "MOA-AD-00306",
+        "licence_no": "動物藥入字第00306號",
+        "name_zh": "犬瘟熱肝炎綜合疫苗",
+        "expiry_date_iso": "1986-07-01",
+        "expiry_date_raw": "至75年07月01日止(已失效)"
+      },
+      {
+        "doc_id": "MOA-AD-00307",
+        "licence_no": "動物藥入字第00307號",
+        "name_zh": "螺旋菌疫苗",
+        "expiry_date_iso": "1986-07-01",
+        "expiry_date_raw": "至75年07月01日止(已失效)"
+      },
+      {
+        "doc_id": "MOA-AD-00310",
+        "licence_no": "動物藥入字第00310號",
+        "name_zh": "犬痳疹疫苗",
+        "expiry_date_iso": "1986-07-01",
+        "expiry_date_raw": "至75年07月01日止(已失效)"
+      }
+    ],
+    "expired_by_date_only_examples": [
+      {
+        "doc_id": "MOA-AD-02977",
+        "licence_no": "動物藥入字第02977號",
+        "name_zh": "碩騰犬瘟熱、腺病毒第二型活毒、鉤端螺旋體不活化混合疫苗",
+        "expiry_date_iso": "2018-03-01",
+        "expiry_date_raw": "至107年03月01日止"
+      },
+      {
+        "doc_id": "MOA-AD-03209",
+        "licence_no": "動物藥入字第03209號",
+        "name_zh": "派克催產素注射液",
+        "expiry_date_iso": "2018-08-01",
+        "expiry_date_raw": "至107年08月01日止"
+      },
+      {
+        "doc_id": "MOA-AD-04337",
+        "licence_no": "動物藥入字第04337號",
+        "name_zh": "安富靈針劑",
+        "expiry_date_iso": "2019-08-01",
+        "expiry_date_raw": "至108年08月01日止"
+      },
+      {
+        "doc_id": "MOA-AD-04442",
+        "licence_no": "動物藥入字第04442號",
+        "name_zh": "長效七二",
+        "expiry_date_iso": "2023-09-01",
+        "expiry_date_raw": "至112年09月01日止"
+      },
+      {
+        "doc_id": "MOA-AD-04925",
+        "licence_no": "動物藥入字第04925號",
+        "name_zh": "維克犬小病毒活毒疫苗",
+        "expiry_date_iso": "2019-07-01",
+        "expiry_date_raw": "至108年07月01日止"
+      }
+    ],
+    "valid_companion_examples": [
+      {
+        "doc_id": "MOA-AD-00006",
+        "licence_no": "動物藥入字第00006號",
+        "name_zh": "速滅菌黴素-1",
+        "expiry_date_iso": null,
+        "species": [
+          "犬",
+          "豬"
+        ]
+      },
+      {
+        "doc_id": "MOA-AD-01139",
+        "licence_no": "動物藥入字第01139號",
+        "name_zh": "若朋",
+        "expiry_date_iso": null,
+        "species": [
+          "犬",
+          "貓",
+          "牛",
+          "馬"
+        ]
+      },
+      {
+        "doc_id": "MOA-AD-01163",
+        "licence_no": "動物藥入字第01163號",
+        "name_zh": "害蟲逃",
+        "expiry_date_iso": null,
+        "species": [
+          "犬",
+          "豬",
+          "雞",
+          "牛",
+          "羊",
+          "馬"
+        ]
+      },
+      {
+        "doc_id": "MOA-AD-02391",
+        "licence_no": "動物藥入字第02391號",
+        "name_zh": "賜肥金注射液",
+        "expiry_date_iso": null,
+        "species": [
+          "犬",
+          "豬",
+          "雞",
+          "火雞"
+        ]
+      },
+      {
+        "doc_id": "MOA-AD-02652",
+        "licence_no": "動物藥入字第02652號",
+        "name_zh": "維剛拓-Ｅ",
+        "expiry_date_iso": "2029-06-30",
+        "species": [
+          "犬",
+          "豬",
+          "牛",
+          "羊",
+          "馬"
+        ]
+      }
+    ]
+  },
+  "disclaimer": "本子集僅供 2026 中化智匯盃競賽原型展示，資料為政府公開資料之擷取與正規化結果，不構成用藥建議。"
+}

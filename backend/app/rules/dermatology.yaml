@@ -1,0 +1,188 @@
+# VetLink AI — 獸醫安全規則層｜皮膚／耳部情境
+meta:
+  pack_id: dermatology
+  pack_version: "1.1.0"
+  scenario: 皮膚耳部
+  authored_by: "VetLink AI 團隊（依公開臨床指南重新結構化）"
+  review_status: pending_vet_signoff
+  reviewer_placeholder: "獸醫顧問 B（簽核中）"
+  reviewed_at: "2026-07-18"
+  next_review_at: "2026-10-18"
+  clinical_basis:
+    - "WSAVA / AAHA dermatology & otitis general guidance"
+    - "Merck Veterinary Manual — Otitis Externa, Pruritus"
+
+rules:
+  - rule_id: VG-RED-301
+    version: "1.0"
+    scenario: 皮膚耳部
+    severity: red
+    title: 急性過敏反應（臉部腫脹／蕁麻疹合併呼吸異常）
+    species: [cat, dog]
+    presentations: [臉部腫脹, 嘴唇腫, 眼皮腫, 蕁麻疹, 全身紅疹合併喘]
+    required_questions:
+      - field: swelling_onset_hours
+        question: 腫脹是何時開始的？
+      - field: breathing_effort
+        question: 是否合併呼吸急促或費力？
+    red_flag_conditions:
+      - any_of:
+          - field: symptoms
+            op: contains_any
+            value: [臉部腫脹, 嘴唇腫, 眼皮腫, 蕁麻疹]
+          - all_of:
+              - field: symptoms
+                op: contains_any
+                value: [全身紅疹]
+              - field: breathing_effort
+                op: in
+                value: [labored, severe]
+    system_action: halt_product_retrieval
+    allowed_outputs: [emergency_referral, danger_signs, visit_summary]
+    forbidden_outputs: [product_recommendation, dosage, home_medication, purchase_link, diagnosis]
+    owner_message: >-
+      急性臉部腫脹或蕁麻疹可能為過敏反應，有惡化為呼吸道水腫的風險，請立即就醫，
+      切勿自行給予人用抗組織胺。
+    regression_cases: [DERM-RED-001, DERM-ADV-001]
+
+  - rule_id: VG-RED-302
+    version: "1.0"
+    scenario: 皮膚耳部
+    severity: red
+    title: 大面積皮膚壞死或深層咬傷傷口
+    species: [cat, dog]
+    presentations: [大面積傷口, 皮膚壞死, 深層咬傷, 傷口化膿發燒]
+    required_questions:
+      - field: wound_size
+        question: 傷口大小與深度？
+      - field: fever
+        question: 是否合併發燒或食慾停止？
+    red_flag_conditions:
+      - field: symptoms
+        op: contains_any
+        value: [大面積傷口, 皮膚壞死, 深層咬傷, 傷口化膿發燒]
+    system_action: halt_product_retrieval
+    allowed_outputs: [emergency_referral, danger_signs]
+    forbidden_outputs: [product_recommendation, dosage, home_medication, purchase_link, diagnosis]
+    owner_message: 深層或大面積傷口需要專業清創與感染評估，請儘速就醫。
+    regression_cases: [DERM-RED-002]
+
+  - rule_id: VG-RED-303
+    version: "1.0"
+    scenario: 皮膚耳部
+    severity: red
+    title: 耳部症狀合併神經異常（歪頭、眼球震顫）
+    species: [cat, dog]
+    presentations: [歪頭, 眼球震顫, 走路轉圈, 耳朵痛到不能碰]
+    required_questions:
+      - field: neuro_signs
+        question: 是否出現歪頭、失去平衡或眼球震顫？
+    red_flag_conditions:
+      - field: symptoms
+        op: contains_any
+        value: [歪頭, 眼球震顫, 走路轉圈]
+    system_action: halt_product_retrieval
+    allowed_outputs: [emergency_referral, danger_signs]
+    forbidden_outputs: [product_recommendation, dosage, home_medication, purchase_link, diagnosis]
+    owner_message: >-
+      耳部症狀合併歪頭或眼球震顫可能涉及中耳／內耳或神經問題，且部分外用藥在耳膜破損時
+      具風險，請由獸醫檢查耳膜後再決定用藥。
+    regression_cases: [DERM-RED-003]
+
+  - rule_id: VG-YEL-310
+    version: "1.1"
+    scenario: 皮膚耳部
+    severity: yellow
+    title: 皮膚搔癢必要資訊補齊
+    species: [cat, dog]
+    presentations: [搔癢, 抓癢, 掉毛, 紅疹, 皮屑]
+    required_questions:
+      - field: species
+        question: 這是貓還是狗？
+      - field: body_weight_kg
+        question: 目前體重大約幾公斤？
+      - field: duration_hours
+        question: 症狀持續多久？
+      - field: severity
+        question: 搔癢是否影響睡眠或造成破皮出血？
+      - field: current_medications
+        question: 目前有無正在使用的藥物、洗劑或除蚤產品？
+    red_flag_conditions: []
+    system_action: ask_required_questions
+    allowed_outputs: [required_questions, interim_safety_notice]
+    forbidden_outputs: [product_recommendation, dosage, diagnosis, purchase_link]
+    owner_message: 皮膚問題成因很多，我需要先補齊幾項必要資訊。
+    regression_cases: [DERM-YEL-001, DERM-YEL-002]
+
+  - rule_id: VG-YEL-311
+    version: "1.0"
+    scenario: 皮膚耳部
+    severity: yellow
+    title: 耳部症狀必要資訊補齊
+    species: [cat, dog]
+    presentations: [耳朵有異味, 耳朵分泌物, 抓耳朵, 甩頭]
+    required_questions:
+      - field: species
+        question: 這是貓還是狗？
+      - field: duration_hours
+        question: 症狀持續多久？
+      - field: ear_discharge
+        question: 分泌物顏色與氣味為何？
+      - field: neuro_signs
+        question: 是否合併歪頭或失去平衡？
+      - field: current_medications
+        question: 是否已自行使用任何耳藥？
+    red_flag_conditions: []
+    system_action: ask_required_questions
+    allowed_outputs: [required_questions, interim_safety_notice]
+    forbidden_outputs: [product_recommendation, dosage, diagnosis, purchase_link]
+    owner_message: 耳道用藥前必須先確認耳膜是否完整，我需要先補齊必要資訊。
+    regression_cases: [DERM-YEL-003]
+
+  - rule_id: VG-GRN-320
+    version: "1.0"
+    scenario: 皮膚耳部
+    severity: green
+    title: 輕微皮膚搔癢居家觀察衛教
+    species: [cat, dog]
+    presentations: [輕微搔癢, 局部皮屑]
+    required_questions: []
+    red_flag_conditions: []
+    system_action: allow_owner_education
+    allowed_outputs: [education, observation_checklist, visit_summary, danger_signs]
+    forbidden_outputs: [dosage, prescription_product, purchase_link, diagnosis]
+    owner_message: >-
+      可先記錄搔癢部位、頻率與是否有跳蚤痕跡，維持環境清潔並避免自行使用人用藥膏。
+      若出現破皮出血、大面積掉毛或持續惡化，請安排就診。
+    regression_cases: [DERM-GRN-001]
+
+  - rule_id: VG-GRN-321
+    version: "1.0"
+    scenario: 皮膚耳部
+    severity: green
+    title: 耳部日常清潔衛教
+    species: [cat, dog]
+    presentations: [耳朵保養, 定期清耳]
+    required_questions: []
+    red_flag_conditions: []
+    system_action: allow_owner_education
+    allowed_outputs: [education, observation_checklist, danger_signs]
+    forbidden_outputs: [dosage, prescription_product, purchase_link, diagnosis]
+    owner_message: >-
+      日常可觀察耳道是否有異味、紅腫或分泌物增加，清潔頻率與產品選擇建議先與獸醫確認。
+    regression_cases: [DERM-GRN-002]
+
+  - rule_id: VG-BLU-330
+    version: "1.0"
+    scenario: 皮膚耳部
+    severity: blue
+    title: 獸醫端皮膚耳部產品檢索授權
+    species: [cat, dog]
+    presentations: [皮膚耳部處方管理]
+    required_questions: []
+    red_flag_conditions: []
+    system_action: allow_vet_product_search
+    allowed_outputs: [approved_indications, ingredients, dosage_form, label_text, product_comparison]
+    forbidden_outputs: [owner_facing_dosage]
+    owner_message: ""
+    regression_cases: [DERM-BLU-001]
