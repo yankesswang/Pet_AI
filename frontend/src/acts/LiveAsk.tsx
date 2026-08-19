@@ -12,13 +12,13 @@
  *   3. 飼主角色的輸出邊界由後端 blocked_output_types 決定，UI 只呈現、不繞過。
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
-import type { ConsultResponse, FollowUpQuestion, GateState } from '../lib/types'
+import type { ConsultResponse, FollowUpQuestion, GateState, RetrievalTrace } from '../lib/types'
 import { consultFree, healthLive, ConsultError, type ConsultFields, type ConsultFailureKind } from '../lib/api'
 import { GATE_META } from '../lib/gateStates'
 import { AnswerPassportCard, ClaimButton } from '../components/Passport'
 import {
   IconArrowRight, IconQuestion, IconStop, IconCheck, IconShield, IconAlert,
-  IconBan, IconClock, IconUser, IconList,
+  IconBan, IconClock, IconUser, IconList, IconSearch,
 } from '../components/Icons'
 
 /* ================================================================== *
@@ -159,8 +159,15 @@ function toConsultFields(raw: RawAnswers, questions: FollowUpQuestion[] = []): C
  */
 const isOptionalBlank = (field: string) => field === 'current_medications'
 
-/** 某一題是否已作答（留白即答案的欄位一律視為已答） */
-export function isAnswered(field: string, raw: RawAnswers): boolean {
+/**
+ * 某一題是否已作答（留白即答案的欄位一律視為已答）。
+ *
+ * 刻意**不** export：這個檔案同時 export React 元件，多一個非元件的 export
+ * 會讓 React Fast Refresh 失效（"export is incompatible"），
+ * 於是每次存檔都變成整頁重載 —— 對話紀錄跟著被清光，這頁最需要保留的
+ * 就是那串對話。只在本檔使用，沒有 export 的必要。
+ */
+function isAnswered(field: string, raw: RawAnswers): boolean {
   if (isOptionalBlank(field)) return true
   return (raw[field] ?? '').trim() !== ''
 }
@@ -788,6 +795,12 @@ function AnswerCard({ data }: { data: ConsultResponse }) {
             </details>
           )}
 
+          {/* 這次從文件庫看了哪些、又為什麼沒看其他的 */}
+          <RetrievalTraceBlock trace={data.retrieval} />
+
+          {/* 語言轉譯揭露：文字被 AI 改寫過就必須說，不能讓飼主以為看到的是原文 */}
+          <TranslationNote status={raw.llm_translation as TranslationStatus | undefined} />
+
           {/* 回答護照 */}
           {p?.audit_id && (
             <div className="stack gap-3">
@@ -807,6 +820,109 @@ function AnswerCard({ data }: { data: ConsultResponse }) {
         </div>
       </section>
     </div>
+  )
+}
+
+/* ================================================================== *
+ * 檢索軌跡
+ *
+ * 回答護照回答「這句話出自哪一段」；這一區回答的是另一個問題：
+ * 「文件庫裡還有什麼，系統為什麼沒講？」
+ *
+ * 沒有後者，「只講有來源的話」無法被反證 —— 使用者看不到被略過的部分，
+ * 也就無從判斷系統是挑對了、還是根本沒看到。因此排除清單與候選清單
+ * 一樣重要，兩邊都要列，而且要列出原因。
+ * ================================================================== */
+
+function RetrievalTraceBlock({ trace }: { trace?: RetrievalTrace }) {
+  if (!trace) return null
+  const c = trace.counts
+  const funnel = [
+    { n: c.library, label: '文件庫總段落' },
+    { n: c.candidates, label: '本次檢索到' },
+    { n: c.claims, label: '成為主張' },
+    { n: c.displayed, label: '實際講出來' },
+  ]
+  return (
+    <details className="live__trace">
+      <summary>
+        <IconSearch size={15} />
+        這次從<b>{c.library}</b> 段文件庫裡看了 <b>{c.candidates}</b> 段，講出 <b>{c.displayed}</b> 段
+      </summary>
+      <div className="live__trace-body">
+        <div className="live__funnel">
+          {funnel.map((f, i) => (
+            <span key={f.label} style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--sp-2)' }}>
+              <span className="live__funnel-step">
+                <span className="live__funnel-n">{f.n}</span> {f.label}
+              </span>
+              {i < funnel.length - 1 && <span className="live__funnel-arrow" aria-hidden>→</span>}
+            </span>
+          ))}
+        </div>
+
+        <p className="muted">
+          檢索方式：{trace.method_zh}。
+          本次判定情境為 <b>{trace.scenarios.join('、') || '未分類'}</b>
+          {trace.species && `，物種 ${SPECIES_LABEL[trace.species as 'cat' | 'dog'] ?? trace.species}`}。
+          一次回答最多產生 {trace.claim_limit} 項主張。
+        </p>
+
+        <div>
+          <div className="live__trace-sub">檢索到的段落（{trace.candidates.length}）</div>
+          {trace.candidates.map((p) => (
+            <div className="live__trace-row" key={p.passage_id}>
+              <span className="live__trace-stage" data-stage={p.stage}>{p.stage_zh}</span>
+              <span className="mono">{p.passage_id}</span>
+              {p.claim_id && <span className="mono muted">{p.claim_id}</span>}
+              <span className="live__trace-text">{p.text}</span>
+            </div>
+          ))}
+        </div>
+
+        {trace.excluded.length > 0 && (
+          <div>
+            <div className="live__trace-sub">文件庫裡沒有被取用的段落（{trace.excluded.length}）</div>
+            {trace.excluded.map((e) => (
+              <div className="live__trace-row" key={e.passage_id}>
+                <span className="live__trace-stage" data-stage="candidate">未取用</span>
+                <span className="mono">{e.passage_id}</span>
+                <span className="live__trace-text">{e.reason_zh}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <p className="muted">
+          完整文件庫內容可在「文件庫」分頁查看，段落編號可直接對照。
+        </p>
+      </div>
+    </details>
+  )
+}
+
+/**
+ * 衛教語言轉譯的揭露。
+ *
+ * 後端可選擇性讓 LLM 改寫已審核段落，讓句子更好讀。改寫過的文字仍然
+ * 綁在同一個來源段落上（護照裡的引用不變），但飼主有權知道自己讀到的
+ * 是原文還是改寫版 —— 這與本頁「不拿罐頭答案冒充真實判定」是同一個原則。
+ * 轉譯未啟用時 rewritten_count 為 0，此區塊不顯示。
+ */
+interface TranslationStatus {
+  total_passages: number
+  rewritten_count: number
+  fallback_count: number
+}
+
+function TranslationNote({ status }: { status?: TranslationStatus }) {
+  if (!status || !status.rewritten_count) return null
+  return (
+    <p className="muted live__basis">
+      本次有 <b>{status.rewritten_count} / {status.total_passages}</b> 段衛教文字經 AI 改寫為更好讀的說法。
+      改寫後仍須通過來源涵蓋度檢查與角色政策掃描，未通過者已退回原文；
+      展開回答護照可看到每一段的原始出處與版本。
+    </p>
   )
 }
 

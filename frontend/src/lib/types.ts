@@ -118,6 +118,144 @@ export interface ConsultResponse {
   visit_summary?: VisitSummary
   passport: AnswerPassport
   timeline?: TimelineEntry[]
+  /** 檢索軌跡：文件庫 → 候選 → 主張 → 實際輸出（後端 retrieval 欄位） */
+  retrieval?: RetrievalTrace
+}
+
+/* ------------------------------------------------------------------ *
+ * 檢索軌跡
+ *
+ * 回答護照證明「每一句話都有來源」；檢索軌跡證明的是另一件事：
+ * 系統從整個文件庫裡看了哪些、又為什麼沒看其他的。
+ * 少了後者，「只講有來源的話」無法被反證 —— 因為看不到被略過的部分。
+ * ------------------------------------------------------------------ */
+
+/** 候選段落在漏斗裡走到哪一層 */
+export type RetrievalStage =
+  /** 已輸出給使用者 */
+  | 'displayed'
+  /** 通過主張驗證，但不在本次允許的輸出型別內 */
+  | 'verified'
+  /** 成為主張但未通過驗證，已刪除 */
+  | 'unsupported'
+  /** 檢索到但未成為主張（超出主張數上限） */
+  | 'candidate'
+
+export interface RetrievalCandidate {
+  passage_id: string
+  doc_id: string
+  version: string
+  text: string
+  scenario_scope: string[]
+  species_scope: string[]
+  issue_date_iso?: string | null
+  expiry_date_iso?: string | null
+  is_expired: boolean
+  review_status: string
+  claim_id?: string | null
+  stage: RetrievalStage
+  stage_zh: string
+}
+
+export interface RetrievalExclusion {
+  passage_id: string
+  doc_id: string
+  scenario_scope: string
+  reason_zh: string
+}
+
+export interface RetrievalTrace {
+  scenarios: string[]
+  species?: string | null
+  method_zh: string
+  claim_limit: number
+  candidates: RetrievalCandidate[]
+  excluded: RetrievalExclusion[]
+  counts: {
+    library: number
+    candidates: number
+    claims: number
+    verified: number
+    displayed: number
+    excluded: number
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * 文件庫瀏覽（GET /api/knowledge）
+ * ------------------------------------------------------------------ */
+
+export interface LibraryPassage {
+  passage_id: string
+  doc_id: string
+  version: string
+  text: string
+  scenario_scope: string[]
+  species_scope: string[]
+  issue_date_iso?: string | null
+  expiry_date_iso?: string | null
+  is_expired: boolean
+  review_status: string
+  source_url?: string | null
+  source_title?: string | null
+  source_org?: string | null
+  source_type: 'online' | 'internal' | 'government_open_data' | string
+  fetched_at?: string | null
+}
+
+export interface LibraryProduct {
+  licence_no: string
+  name_zh: string
+  name_en?: string | null
+  company?: string | null
+  dosage_form?: string | null
+  ingredients_clean?: string | null
+  indications_raw?: string | null
+  species: string[]
+  issue_date_iso?: string | null
+  expiry_date_iso?: string | null
+  is_expired: boolean
+  expired_by_marker?: boolean
+  expiry_date_raw?: string | null
+  source_url?: string | null
+  gate_zh: string
+}
+
+export interface KnowledgeLibrary {
+  as_of: string
+  role_zh: string
+  education: {
+    total: number
+    online_total: number
+    internal_total: number
+    by_scenario: Record<string, number>
+    by_source_org: Record<string, number>
+    online_by_source_org: Record<string, number>
+    note_zh: string
+    passages: LibraryPassage[]
+  }
+  products: {
+    unlocked: boolean
+    total: number
+    valid: number
+    expired: number
+    companion_animal: number
+    ccpc_total: number
+    source_zh: string
+    note_zh: string
+    records: LibraryProduct[]
+  }
+  expiry_gate: {
+    date_only_expired_count: number
+    examples: Array<{
+      licence_no: string
+      name_zh: string
+      expiry_date_raw?: string | null
+      expiry_date_iso?: string | null
+      reason: string
+    }>
+    note_zh: string
+  }
 }
 
 export interface ContentBlock {
@@ -343,4 +481,88 @@ export interface CompareResponse {
   arms: CompareArm[]
   dimension_order: CompareDimensionKey[]
   conclusion_zh: string
+}
+
+/* ------------------------------------------------------------------ *
+ * 有效性驗證 — 獨立留出測試集 (GET /api/eval/holdout)
+ *
+ * 注意：後端以 "YELLOW" 表示資訊不足狀態，本頁的狀態欄位是
+ * 評測原始輸出（非 gate_state 欄位），因此不會經過 api.ts 的
+ * 自動正規化，顯示時需自行轉成 AMBER。
+ * ------------------------------------------------------------------ */
+
+export interface HoldoutMetric {
+  key: string
+  name_zh: string
+  target: number
+  /** min = 越高越好；max = 越低越好（違規率） */
+  direction: 'min' | 'max'
+  measured: number | null
+  numerator: number
+  denominator: number
+  passed: boolean | null
+  failures: Array<{ case_id: string; detail: string }>
+  failure_count: number
+}
+
+export interface HoldoutCaseResult {
+  case_id: string
+  group: string
+  perturbation: string
+  text: string
+  expect_state: string | null
+  safe_states: string[]
+  actual_state: string
+  refusal: string
+  halted: boolean
+  halt_ok: boolean
+  has_referral: boolean
+  has_emergency_referral: boolean
+  asks_questions: boolean
+  leaks: string[]
+  fired_rules: string[]
+  basis: string
+}
+
+export interface HoldoutContrastArm {
+  dataset: string
+  label_zh: string
+  total: number
+  caught: number
+  recall: number | null
+}
+
+export interface HoldoutResults {
+  generated_at: string
+  dataset: string
+  as_of: string
+  rules_bundle_version?: string
+  cached: boolean
+  case_set: {
+    total: number
+    by_group: Record<string, number>
+    by_perturbation: Record<string, number>
+    red_truth: number
+    green_truth: number
+    paraphrase_groups: number
+  }
+  environment: {
+    llm_in_gate_path: boolean
+    llm_structuring: string
+    llm_translation: string
+    llm_key_present: boolean
+    llm_model: string
+  }
+  metrics: HoldoutMetric[]
+  confusion_matrix: Record<string, Record<string, number>>
+  red_recall_by_perturbation: Record<string, { total: number; caught: number; recall: number | null }>
+  paraphrase_groups: Record<string, { states: string[]; consistent: boolean; all_unsafe: boolean }>
+  contrast: {
+    metric_zh: string
+    case_bank: HoldoutContrastArm
+    holdout: HoldoutContrastArm | null
+    note_zh: string
+  }
+  cases: HoldoutCaseResult[]
+  caveats: string[]
 }

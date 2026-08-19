@@ -127,6 +127,116 @@ def stats() -> Dict[str, Any]:
 
 
 # --------------------------------------------------------------------------
+# 文件庫瀏覽
+#
+# 「系統只講有來源的話」如果不能被當場檢查，就只是一句宣稱。這個端點把
+# 受控知識庫的內容全部攤開，讓人可以自己核對回答裡的每一段出自哪裡。
+#
+# **角色政策同樣套用在瀏覽器上**：衛教段落是飼主可見內容（本來就是綠色狀態
+# 會輸出的東西），產品許可證屬藍色專業模式，未驗證身分只給統計數字。
+# --------------------------------------------------------------------------
+@router.get("/knowledge")
+def knowledge(
+    x_vet_token: Optional[str] = Header(default=None, alias="X-Vet-Token"),
+    authorization: Optional[str] = Header(default=None),
+    q: str = Query(default="", description="產品關鍵字（僅藍色模式）"),
+    species: Optional[str] = Query(default=None, description="cat / dog"),
+    limit: int = Query(default=60, ge=1, le=200, description="產品筆數上限"),
+) -> Dict[str, Any]:
+    kb = get_kb()
+
+    vet_unlocked = False
+    if x_vet_token or authorization:
+        try:
+            _verify_vet(x_vet_token, authorization)
+            vet_unlocked = True
+        except HTTPException:
+            vet_unlocked = False
+
+    education = [
+        {
+            "passage_id": p.passage_id,
+            "doc_id": p.doc_id,
+            "version": p.version,
+            "text": p.text,
+            "scenario_scope": p.scenario_scope,
+            "species_scope": p.species_scope,
+            "issue_date_iso": p.issue_date_iso,
+            "expiry_date_iso": p.expiry_date_iso,
+            "is_expired": p.is_expired,
+            "review_status": p.review_status,
+            "source_url": p.source_url,
+            "source_title": p.source_title,
+            "source_org": p.source_org,
+            "source_type": p.source_type,
+            "fetched_at": p.fetched_at,
+        }
+        for pid, p in sorted(kb.passages.items())
+        if pid.startswith("EDU-")
+    ]
+
+    by_scenario: Dict[str, int] = {}
+    by_source_org: Dict[str, int] = {}
+    online_by_source_org: Dict[str, int] = {}
+    for e in education:
+        for sc in e["scenario_scope"] or ["未標註"]:
+            by_scenario[sc] = by_scenario.get(sc, 0) + 1
+        org = e["source_org"] or "未標註"
+        by_source_org[org] = by_source_org.get(org, 0) + 1
+        if e["source_type"] == "online":
+            online_by_source_org[org] = online_by_source_org.get(org, 0) + 1
+
+    products: Dict[str, Any] = {
+        "unlocked": vet_unlocked,
+        "total": kb.stats["product_count"],
+        "valid": kb.stats["valid_product_count"],
+        "expired": kb.stats["expired_product_count"],
+        "companion_animal": kb.stats["companion_animal_count"],
+        "ccpc_total": kb.stats["ccpc_product_count"],
+        "source_zh": "農業部動物用藥品許可證開放資料",
+        "records": [],
+    }
+    if vet_unlocked:
+        valid, expired = kb.search_products(query=q, species=species, limit=limit)
+        products["records"] = [
+            {**p.model_dump(mode="json"), "gate_zh": "通過效期閘門"} for p in valid
+        ] + [
+            {**p.model_dump(mode="json"), "gate_zh": "已逾效期，藍色模式仍標示但不得引用"}
+            for p in expired[:limit]
+        ]
+        products["note_zh"] = "已通過獸醫身分驗證，顯示核准適應症與成分。"
+    else:
+        products["note_zh"] = (
+            "產品許可證內容屬藍色專業模式（提案 §5.1）。未通過獸醫身分驗證時"
+            "只提供統計數字，不提供成分、適應症與許可證明細。"
+        )
+
+    return {
+        "as_of": kb.stats["as_of"],
+        "role_zh": "獸醫／管理者" if vet_unlocked else "飼主",
+        "education": {
+            "total": len(education),
+            "online_total": sum(1 for e in education if e["source_type"] == "online"),
+            "internal_total": sum(1 for e in education if e["source_type"] == "internal"),
+            "by_scenario": by_scenario,
+            "by_source_org": by_source_org,
+            "online_by_source_org": online_by_source_org,
+            "note_zh": (
+                "綠色狀態能對飼主輸出的內容，全集就是這些段落；"
+                "系統不改寫醫療內容，只決定要輸出其中哪幾段。"
+            ),
+            "passages": education,
+        },
+        "products": products,
+        "expiry_gate": {
+            "date_only_expired_count": kb.stats["date_only_expired_count"],
+            "examples": kb.marker_disagreements[:5],
+            "note_zh": "來源未標示 (已失效)，僅能以民國日期換算後與基準日比較才判定過期。",
+        },
+    }
+
+
+# --------------------------------------------------------------------------
 # A/B/C 三組對照 (提案 §12.1)
 # --------------------------------------------------------------------------
 class CompareRequest(BaseModel):
@@ -338,3 +448,54 @@ def impact_replay(
 @router.get("/admin/impact-events")
 def impact_events(limit: int = Query(default=100, ge=1, le=500)) -> Dict[str, Any]:
     return {"events": get_store().list_impact_events(limit=limit)}
+
+
+# --------------------------------------------------------------------------
+# 有效性驗證：獨立留出測試集
+#
+# `eval/case_bank.py` 的 177 例與規則同源撰寫，措辭幾乎都落在症狀詞典裡，
+# 因此它證明的是「規則有沒有被正確執行」。留出集刻意避開詞典字串，
+# 量的是另一件事：**沒看過的說法會怎樣**。
+#
+# 這個端點**當場把 107 例跑完**再回傳，不是讀一份預先寫好的結果檔 ——
+# 一頁宣稱「這是我們的驗證數字」卻讀靜態檔，就跟拿罐頭回答冒充判定一樣，
+# 無法被檢查。同一個請求裡另外跑 case_bank 的 40 例急症作為同刻對照。
+# --------------------------------------------------------------------------
+_EVAL_CACHE: Dict[str, Any] = {}
+
+
+@router.get("/eval/holdout")
+def eval_holdout(
+    refresh: bool = Query(default=False, description="忽略快取重新執行評測"),
+) -> Dict[str, Any]:
+    if not refresh and _EVAL_CACHE.get("payload"):
+        cached = dict(_EVAL_CACHE["payload"])
+        cached["cached"] = True
+        return cached
+
+    try:
+        from eval.holdout import load_holdout, validate
+        from eval.run_holdout import HoldoutEvaluator, contrast
+    except ImportError as exc:  # eval/ 不在 sys.path（未從 backend/ 啟動）
+        raise HTTPException(
+            status_code=503,
+            detail=f"找不到 eval 套件，無法執行留出測試集評測：{exc}。"
+                   "請從 backend/ 目錄啟動服務。",
+        ) from exc
+
+    cases = load_holdout()
+    problems = validate(cases)
+    if problems:
+        raise HTTPException(
+            status_code=500,
+            detail="留出測試集本身有結構問題，拒絕回報數字：" + "；".join(problems[:5]),
+        )
+
+    evaluator = HoldoutEvaluator(cases)
+    results = evaluator.run()
+    results["contrast"] = contrast(results, evaluator.service)
+    results["rules_bundle_version"] = get_rule_engine().bundle_version
+    results["cached"] = False
+
+    _EVAL_CACHE["payload"] = results
+    return results

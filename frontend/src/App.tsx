@@ -11,10 +11,12 @@ import { Act2 } from './acts/Act2'
 import { Act3 } from './acts/Act3'
 import { AmberAct } from './acts/AmberAct'
 import { LiveAsk } from './acts/LiveAsk'
+import { Library } from './acts/Library'
+import { Validation } from './acts/Validation'
 import { IconShield, IconArrowRight, IconTarget, IconStop, IconRefresh, IconCheck } from './components/Icons'
 
 /** 導覽分頁 */
-type ViewId = 'live' | 'overview' | 'compare' | 'act1' | 'amber' | 'act2' | 'act3'
+type ViewId = 'live' | 'library' | 'validation' | 'overview' | 'compare' | 'act1' | 'amber' | 'act2' | 'act3'
 
 interface ViewDef {
   id: ViewId
@@ -22,13 +24,25 @@ interface ViewDef {
   label: string
   /** 此頁的主要角色視角 — 用於角色切換器高亮 */
   role: Role
+  /**
+   * 此頁一律直接打後端、沒有 mock 備援。
+   * 頂欄的 MOCK/LIVE 標示反映的是「劇本頁用的是哪種資料」，
+   * 套到這些頁上會說謊，因此改由該頁自己標示連線狀態。
+   */
+  alwaysLive?: boolean
 }
 
 const VIEWS: ViewDef[] = [
   // 實際使用頁放在第一個：這是唯一一頁使用者可以真的自己提問的地方，
   // 其餘分頁都是為評審設計的固定劇本導覽。
   // kicker 只保留 label 沒說的資訊（此頁對應的閘門狀態），不重複幕次。
-  { id: 'live', kicker: 'LIVE', label: '我要提問｜真實提問與判定', role: 'owner' },
+  { id: 'live', kicker: 'LIVE', label: '我要提問｜真實提問與判定', role: 'owner', alwaysLive: true },
+  // 文件庫緊接在提問頁後面：看完回答的下一個問題就是「這些話是哪來的」。
+  { id: 'library', kicker: '', label: '文件庫｜來源全集', role: 'owner', alwaysLive: true },
+  // 驗證頁緊接在文件庫後面：看完「話從哪來」，下一個該問的是
+  // 「這套判定在沒看過的說法上還準不準」。放在劇本頁之前，
+  // 是因為它決定了後面那些劇本該用多大的力道解讀。
+  { id: 'validation', kicker: 'EVAL', label: '驗證結果｜留出測試集', role: 'owner', alwaysLive: true },
   { id: 'overview', kicker: '', label: '四種狀態總覽', role: 'owner' },
   { id: 'compare', kicker: '', label: '對照組｜A / B / C 三組同輸入', role: 'owner' },
   { id: 'act1', kicker: 'RED', label: '第一幕｜系統拒絕用藥要求', role: 'owner' },
@@ -37,8 +51,19 @@ const VIEWS: ViewDef[] = [
   { id: 'act3', kicker: 'REPLAY', label: '第三幕｜仿單更新追回舊回答', role: 'admin' },
 ]
 
+/**
+ * 網址 hash → 分頁。讓每個分頁可以被直接連結（例如寄
+ * `.../#library` 給評審），重新整理後也會停在原地。
+ * 不引入 router：分頁是固定七個，一個 hash 就夠了。
+ */
+const VIEW_IDS = VIEWS.map((v) => v.id)
+const parseHash = (): ViewId => {
+  const id = window.location.hash.replace(/^#/, '') as ViewId
+  return VIEW_IDS.includes(id) ? id : 'live'
+}
+
 export function App() {
-  const [view, setView] = useState<ViewId>('live')
+  const [view, setView] = useState<ViewId>(parseHash)
   const [source, setSource] = useState<DataSource>(USE_MOCKS ? 'mock' : 'live')
 
   /** live 模式下確認後端是否真的活著，供頂欄標示 */
@@ -58,14 +83,22 @@ export function App() {
 
   const current = VIEWS.find((v) => v.id === view)!
 
+  /** 上一頁／下一頁與手動改 hash 都要能切頁 */
+  useEffect(() => {
+    const onHash = () => setView(parseHash())
+    window.addEventListener('hashchange', onHash)
+    return () => window.removeEventListener('hashchange', onHash)
+  }, [])
+
   const go = (id: ViewId) => {
     setView(id)
+    if (parseHash() !== id) window.location.hash = id
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   return (
     <div className="app">
-      <TopBar source={source} hideSource={view === 'live'} />
+      <TopBar source={source} liveOnly={current.alwaysLive} />
 
       <nav className="actnav" aria-label="Demo 導覽">
         <div className="actnav__inner">
@@ -92,6 +125,8 @@ export function App() {
           }} />
 
           {view === 'live' && <LiveAsk />}
+          {view === 'library' && <Library />}
+          {view === 'validation' && <Validation />}
           {view === 'overview' && <Overview onStart={() => go('act1')} />}
           {view === 'compare' && <Compare />}
           {view === 'act1' && <Act1 onNext={() => go('act2')} />}
@@ -114,7 +149,7 @@ const SOURCE_LABEL: Record<DataSource, string> = {
   'live-fallback': 'LIVE → MOCK 備援',
 }
 
-function TopBar({ source, hideSource }: { source: DataSource; hideSource?: boolean }) {
+function TopBar({ source, liveOnly }: { source: DataSource; liveOnly?: boolean }) {
   return (
     <header className="topbar">
       <div className="topbar__inner">
@@ -127,9 +162,9 @@ function TopBar({ source, hideSource }: { source: DataSource; hideSource?: boole
         </div>
         <div className="topbar__meta">
           <span>資料時點 {DATASET_FACTS.as_of}</span>
-          {hideSource ? (
-            /* 實際使用頁的資料來源由該頁自身的連線指示負責，避免兩處說法不一致 */
-            <span className="chip-mode" data-live>飼主實際使用模式</span>
+          {liveOnly ? (
+            /* 這些頁的資料來源由該頁自身的連線指示負責，避免兩處說法不一致 */
+            <span className="chip-mode" data-live>即時後端資料，無備援</span>
           ) : (
             <span className="chip-mode" data-live={source === 'live'}>{SOURCE_LABEL[source]}</span>
           )}

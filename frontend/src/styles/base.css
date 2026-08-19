@@ -111,7 +111,7 @@ code, .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums;
   display: flex; align-items: stretch; gap: 0;
   max-width: 1360px; margin: 0 auto;
   overflow-x: auto;
-  /* 七個分頁在 1440px 仍會溢出，最後一項被裁掉且沒有任何可捲動的提示。
+  /* 八個分頁在 1440px 仍會溢出，最後一項被裁掉且沒有任何可捲動的提示。
      保留水平捲動，但補上右側留白與淡出遮罩，讓「還有內容」看得出來。 */
   scrollbar-width: thin;
   padding-right: var(--sp-6);

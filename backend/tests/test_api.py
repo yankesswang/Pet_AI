@@ -298,3 +298,73 @@ def test_expiry_gate_excludes_expired_products(client, vet_headers):
     assert all(p["is_expired"] is False for p in d["results"])
     assert d["excluded_expired_count"] > 0
     assert d["excluded_expired_licences"]
+
+
+# --------------------------------------------------------------------------
+# 文件庫瀏覽 — 角色政策同樣適用
+# --------------------------------------------------------------------------
+def test_knowledge_library_exposes_education_passages(client):
+    r = client.get("/api/knowledge")
+    assert r.status_code == 200
+    body = r.json()
+    edu = body["education"]
+    assert edu["total"] == len(edu["passages"]) > 0
+    first = edu["passages"][0]
+    for field in ("passage_id", "doc_id", "version", "text",
+                  "scenario_scope", "expiry_date_iso", "review_status"):
+        assert field in first
+    assert edu["total"] == 47
+    assert edu["online_total"] == 33
+    assert edu["internal_total"] == 14
+    assert len(edu["by_source_org"]) >= 4
+    assert len(edu["online_by_source_org"]) == 4
+    expanded = [p for p in edu["passages"] if p["passage_id"] == "EDU-GI-003"]
+    assert expanded and expanded[0]["source_url"].startswith("https://")
+    assert expanded[0]["source_org"] == "MSD Veterinary Manual"
+
+
+def test_knowledge_library_hides_products_from_owner(client):
+    body = client.get("/api/knowledge").json()
+    products = body["products"]
+    assert products["unlocked"] is False
+    assert products["records"] == []
+    # 統計數字仍給，讓飼主知道母體規模
+    assert products["total"] > 0
+    assert "藍色專業模式" in products["note_zh"]
+
+
+def test_knowledge_library_unlocks_products_for_vet(client, vet_headers):
+    body = client.get("/api/knowledge?limit=5", headers=vet_headers).json()
+    products = body["products"]
+    assert products["unlocked"] is True
+    assert len(products["records"]) > 0
+    assert all("gate_zh" in r for r in products["records"])
+
+
+def test_knowledge_library_rejects_invalid_token_as_owner(client):
+    """無效 token 不得解鎖 —— 靜默退回飼主視角，不得放行。"""
+    body = client.get("/api/knowledge", headers={"X-Vet-Token": "bogus"}).json()
+    assert body["products"]["unlocked"] is False
+    assert body["products"]["records"] == []
+
+
+def test_consult_response_carries_retrieval_trace(client):
+    r = client.post("/api/consult", json={
+        "text": "我家貓咪最近有點軟便，該注意什麼？",
+        "role": "owner", "species": "cat", "body_weight_kg": 4.5,
+        "duration_hours": 48, "severity": "輕微", "current_medications": [],
+    })
+    assert r.status_code == 200
+    trace = r.json()["retrieval"]
+    assert trace["method_zh"].startswith("情境標註比對")
+    assert trace["counts"]["candidates"] > 0
+    assert trace["excluded"]
+
+
+def test_knowledge_library_filters_products_by_species(client, vet_headers):
+    """200 筆母體以畜禽為主，犬貓用藥必須篩得出來。"""
+    body = client.get("/api/knowledge?species=cat&limit=200", headers=vet_headers).json()
+    records = body["products"]["records"]
+    assert records, "貓用產品應至少有一筆"
+    for r in records:
+        assert "cat" in r["species"], f"{r['licence_no']} 不適用於貓卻被列出"

@@ -40,15 +40,14 @@ REQUIRED_OWNER_FIELDS: List[Tuple[str, str]] = [
     ("current_medications", "目前有沒有正在使用的藥物或保健品？"),
 ]
 
-# 這些意圖屬政策層攔截，不因資料不足而改判黃色
-POLICY_INTENTS = {
-    "dosage_request",
-    "purchase_request",
-    "prescription_request",
-    "medication_change_request",
-    "diagnosis_request",
-    "cross_species_use",
-}
+# 索取劑量／購買／確診等意圖屬政策層攔截，不因資料不足而改判黃色去追問。
+# 這件事**由檢查順序保證**：`decide()` 先跑角色資格（severity: policy／role）
+# 才跑資料資格，政策規則一旦成立就直接回傳，走不到黃色分支。
+# 涵蓋這些意圖的規則：VG-POL-420（劑量／購買／處方）、VG-POL-421（停換藥）、
+# VG-POL-422（確診）、VG-POL-430（跨物種）、VG-POL-431（物種未指明）。
+#
+# 註：此處原本另有一份 POLICY_INTENTS 意圖清單，但全專案從未被引用 ——
+# 它看起來像在控制流程，實際上沒有。已移除，避免誤導後續維護者。
 
 
 # system_action 代碼 → 中文說明（給飼主與獸醫閱讀，非工程用語）
@@ -386,7 +385,40 @@ class EvidenceGate:
             # 部分主張被刪除但仍有可輸出內容 → 檢查通過，主張已移除
             result.notes.append(verification.refusal_detail)
 
+        # 把上面的判定同時以規則形式記錄下來。
+        # VG-EVD-440/441/442 三條規則原本從未被評估（沒有任何地方跑
+        # severities=["evidence"]），導致因證據不足而拒答的回答，護照裡
+        # 找不到任何規則編號 —— 「哪一條規則讓系統拒答」無從回查。
+        # 規則不改變上面的 passed 判定，只補齊稽核軌跡與飼主說明。
+        for ev in self.rules.evaluate(self._evidence_facts(ctx, expired, verification),
+                                      severities=["evidence"]):
+            if ev.outcome == "fired":
+                result.rules_fired.append(_rule_ref(ev))
+
         return result
+
+    def _evidence_facts(
+        self,
+        ctx: GateContext,
+        expired: Sequence[SourcePassage],
+        verification: VerificationResult,
+    ) -> Dict[str, Any]:
+        """VG-EVD-* 規則需要的欄位。全部明確給值，避免規則落入 unknown。"""
+        supporting = {
+            p.passage_id
+            for b in verification.bindings if b.supported
+            for p in b.passages
+        }
+        facts = dict(ctx.facts)
+        facts.update(
+            {
+                "source_expired": bool(expired),
+                "supporting_sources_count": len(supporting),
+                "source_conflict": bool(ctx.facts.get("source_conflict"))
+                or bool(self._detect_source_conflicts(ctx.candidate_passages)),
+            }
+        )
+        return facts
 
     def check_consistency(self, ctx: GateContext, verification: Optional[VerificationResult]) -> CheckResult:
         """5. 一致性資格：來源沒有未解決衝突；否則拒答並轉介。"""
@@ -524,14 +556,22 @@ class EvidenceGate:
         checks.append(consistency)
 
         if not evidence.passed:
+            evidence_rules = [
+                r for r in (self.rules.get(ref.rule_id) for ref in evidence.rules_fired) if r
+            ]
             decision = GateDecision(
                 state=GateState.GREEN if ctx.role == Role.OWNER else GateState.BLUE,
                 checks=checks,
                 refusal_reason=RefusalReason.INSUFFICIENT_EVIDENCE,
                 refusal_detail="; ".join(evidence.notes),
+                fired_rules=evidence_rules,
                 product_retrieval_halted=True,
                 verification=verification,
             )
+            # 輸出白名單仍取自角色×狀態，不縮到規則宣告的範圍：
+            # VG-EVD-* 的 allowed_outputs 不含 visit_summary，若改用它會讓
+            # 飼主在拒答時連就診摘要都拿不到 —— 那是拒答時最該給的東西。
+            # 規則在此只負責提供可回查的編號與已審核的拒答說明。
             self._apply_policy(decision, ctx, [])
             decision.applicable_scope = self._scope(ctx, [])
             return decision

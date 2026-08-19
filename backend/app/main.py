@@ -1,8 +1,8 @@
 """VetLink AI — FastAPI 應用進入點。
 
-啟動：
+啟動（於 repo 根目錄）：
     cd backend
-    /home/trx50/Project/Pet_AI/.venv/bin/python -m uvicorn app.main:app --reload --port 2222
+    ../.venv/bin/python -m uvicorn app.main:app --reload --port 2222
 """
 from __future__ import annotations
 

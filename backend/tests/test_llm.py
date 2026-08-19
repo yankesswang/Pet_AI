@@ -468,3 +468,87 @@ def test_compare_endpoint_default_is_flagship(client):
     body = r.json()
     assert body["is_flagship_case"] is True
     assert body["arms"][2]["gate_state"] == "RED"
+
+
+# ==========================================================================
+# 6. 語言轉譯器「有真的接上請求路徑」
+#
+# 這組測試存在的理由：轉譯器曾經完整實作、測試齊全，卻沒有被 service.py
+# 呼叫過 —— 開了旗標也不會有任何效果。單元測試無法發現這種缺陷，
+# 只有從 consult() 端到端驗證才會。
+# ==========================================================================
+def green_req() -> ConsultRequest:
+    """帶齊必填欄位的綠色案例 —— 缺任一項會停在黃色，測不到衛教輸出。"""
+    return ConsultRequest(
+        text="我家貓咪最近有點軟便，該注意什麼？",
+        role=Role.OWNER,
+        species=Species.CAT,
+        body_weight_kg=4.5,
+        duration_hours=48.0,
+        severity="輕微",
+        current_medications=[],
+    )
+
+
+def test_consult_reports_translation_status():
+    """轉譯未啟用時仍必須揭露「這次幾段改寫、幾段退回原文」。"""
+    resp = ConsultService().consult(green_req())
+    assert resp.state == GateState.GREEN
+    status = resp.llm_translation
+    assert status is not None, "衛教輸出必須附上轉譯稽核摘要"
+    assert status["rewritten_count"] == 0
+    assert status["fallback_count"] == status["total_passages"] > 0
+
+
+def test_consult_applies_translation_when_enabled(monkeypatch):
+    """旗標開啟 + 忠實改寫 → 飼主看到的文字必須真的變成改寫版。"""
+    original = (
+        "單次軟便且精神食慾正常時，可先觀察並記錄排便次數與性狀，"
+        "維持乾淨飲水，避免臨時更換飼料。"
+    )
+    faithful = (
+        "如果只是單次軟便，而且精神和食慾都正常，可以先觀察，"
+        "並記錄排便的次數與性狀；維持乾淨飲水，也避免臨時更換飼料。"
+    )
+    fake = FakeClient(text_result=faithful)
+    monkeypatch.setenv("VETLINK_LLM_TRANSLATION", "on")
+    monkeypatch.setattr("app.llm.translator_llm.get_client", lambda: fake)
+
+    resp = ConsultService().consult(green_req())
+
+    assert resp.llm_translation is not None
+    assert resp.llm_translation["rewritten_count"] > 0, "轉譯器沒有被請求路徑呼叫"
+    assert faithful in resp.messages
+    assert original not in resp.messages
+
+
+def test_translation_never_changes_gate_decision(monkeypatch):
+    """改寫只影響顯示文字：狀態、規則、主張引用一律不受影響。"""
+    baseline = ConsultService().consult(green_req())
+
+    fake = FakeClient(text_result="如果只是單次軟便，精神食慾都正常，可以先觀察並記錄排便次數與性狀，維持乾淨飲水，避免臨時更換飼料。")
+    monkeypatch.setenv("VETLINK_LLM_TRANSLATION", "on")
+    monkeypatch.setattr("app.llm.translator_llm.get_client", lambda: fake)
+    translated = ConsultService().consult(green_req())
+
+    assert translated.state == baseline.state
+    assert translated.allowed_output_types == baseline.allowed_output_types
+    assert translated.blocked_output_types == baseline.blocked_output_types
+    # 護照引用必須仍指向原始段落
+    def cited(r):
+        return sorted(p.passage_id for b in r.passport.claim_bindings for p in b.passages)
+    assert cited(translated) == cited(baseline)
+    assert [b.claim_text for b in translated.passport.claim_bindings] == [
+        b.claim_text for b in baseline.passport.claim_bindings
+    ]
+
+
+def test_translation_failure_falls_back_to_source_text(monkeypatch):
+    """改寫加入來源沒有的內容 → 涵蓋度不足 → 飼主看到的仍是原文。"""
+    fake = FakeClient(text_result="貓咪軟便可以先餵益生菌三天，每天兩包。")
+    monkeypatch.setenv("VETLINK_LLM_TRANSLATION", "on")
+    monkeypatch.setattr("app.llm.translator_llm.get_client", lambda: fake)
+
+    resp = ConsultService().consult(green_req())
+    assert resp.llm_translation["rewritten_count"] == 0
+    assert not any("益生菌" in m for m in resp.messages)

@@ -3,12 +3,21 @@ import json, subprocess, time, base64, urllib.request, os, sys, shutil
 import websocket
 
 URL = os.environ.get("SHOOT_URL", "http://localhost:5173/")
-OUT = os.environ.get("SHOOT_OUT", "/home/trx50/Project/Pet_AI/docs/screenshots")
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+OUT = os.environ.get("SHOOT_OUT", os.path.join(REPO_ROOT, "docs", "screenshots"))
 PORT = 9222
 VIEWS = [("compare","05_compare"),("overview","00_overview"),("act1","01_act1_red"),("amber","02_amber"),
          ("act2","03_act2_blue"),("act3","04_act3_replay")]
 
-chrome = shutil.which("google-chrome") or shutil.which("chromium-browser")
+chrome = (
+    shutil.which("google-chrome")
+    or shutil.which("chromium-browser")
+    # macOS 的 Chrome 不在 PATH 上
+    or next((c for c in ["/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"]
+             if os.path.exists(c)), None)
+)
+if not chrome:
+    sys.exit("找不到 Chrome／Chromium，請設定 PATH 或安裝後再執行。")
 proc = subprocess.Popen([chrome,"--headless=new","--disable-gpu","--no-sandbox",
     f"--remote-debugging-port={PORT}","--remote-allow-origins=*","--hide-scrollbars","--force-device-scale-factor=2",
     "--window-size=1500,1000", URL],

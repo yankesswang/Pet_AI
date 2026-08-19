@@ -185,11 +185,18 @@ class SourcePassage(BaseModel):
     version: str
     text: str
     source_url: Optional[str] = None
+    source_title: Optional[str] = None
+    source_org: Optional[str] = None
+    source_type: str = "internal"  # online | internal | government_open_data
     issue_date_iso: Optional[str] = None
     expiry_date_iso: Optional[str] = None
     is_expired: bool = False
     review_status: str = "approved"
     species_scope: List[str] = Field(default_factory=list)
+    # 適用情境（泌尿／腸胃／皮膚耳部／呼吸／跨情境）。這是明確標註的資料，
+    # 用來取代關鍵字計分檢索 —— 「食慾」「飲水」這類通用詞會把不相關情境的
+    # 段落帶進候選，段落本身雖然仍有來源支持，但對這次提問並不切題。
+    scenario_scope: List[str] = Field(default_factory=list)
     licence_no: Optional[str] = None
     fetched_at: Optional[str] = None
 
@@ -278,6 +285,12 @@ class ConsultResponse(BaseModel):
     blocked_output_types: List[str] = Field(default_factory=list)
     product_retrieval_halted: bool = False
     visit_summary: Optional[Dict[str, Any]] = None
+    # 衛教語言轉譯的稽核摘要：這次有幾段實際被 LLM 改寫、幾段退回原文。
+    # 轉譯旗標關閉（預設）時每一段都是 fallback，rewritten_count 恆為 0。
+    llm_translation: Optional[Dict[str, Any]] = None
+    # 檢索軌跡：文件庫 → 候選 → 主張 → 實際輸出的四層漏斗，含被排除段落與原因。
+    # 讓「系統只講有來源的話」可被當場檢查，而不只是一句宣稱。
+    retrieval: Optional[Dict[str, Any]] = None
     passport: AnswerPassport
 
 

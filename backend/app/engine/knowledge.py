@@ -18,11 +18,36 @@ import json
 import os
 from datetime import date, datetime
 from typing import Any, Dict, List, Optional
+from urllib.parse import urlparse
 
 from ..models import ProductCard, SourcePassage
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
 PRODUCTS_PATH = os.path.join(DATA_DIR, "demo_products.json")
+EDUCATION_PATH = os.path.join(DATA_DIR, "education_passages.json")
+
+_SOURCE_ORGS = {
+    "www.msdvetmanual.com": "MSD Veterinary Manual",
+    "www.vet.cornell.edu": "Cornell University College of Veterinary Medicine",
+    "www.fda.gov": "U.S. Food and Drug Administration",
+    "www.aaha.org": "American Animal Hospital Association",
+    "wsava.org": "World Small Animal Veterinary Association",
+    "law.moa.gov.tw": "農業部動植物防疫檢疫署",
+    "data.moa.gov.tw": "農業部動植物防疫檢疫署",
+}
+
+
+def _source_metadata(rec: Dict[str, Any]) -> tuple:
+    """由來源 URL 補齊線上／內部分類與來源單位，保留資料檔明示值優先。"""
+    source_url = str(rec.get("source_url") or "")
+    if source_url.startswith(("http://", "https://")):
+        host = urlparse(source_url).netloc.lower()
+        source_type = rec.get("source_type") or "online"
+        source_org = rec.get("source_org") or _SOURCE_ORGS.get(host) or host
+    else:
+        source_type = rec.get("source_type") or "internal"
+        source_org = rec.get("source_org") or "VetLink 獸醫審核內容"
+    return str(source_type), str(source_org)
 
 # --------------------------------------------------------------------------
 # Fallback fixture — 僅在真實資料檔缺席時使用，明確標示來源
@@ -129,6 +154,7 @@ FALLBACK_PRODUCTS: List[Dict[str, Any]] = [
 EDUCATION_PASSAGES: List[Dict[str, Any]] = [
     {
         "passage_id": "EDU-URI-001",
+        "scenario_scope": ["泌尿"],
         "doc_id": "EDU-URINARY-CARE",
         "version": "1.1",
         "text": "維持充足飲水與乾淨砂盆有助於降低下泌尿道問題的發生風險。建議每日記錄飲水量、排尿次數與尿量。",
@@ -140,6 +166,7 @@ EDUCATION_PASSAGES: List[Dict[str, Any]] = [
     },
     {
         "passage_id": "EDU-URI-002",
+        "scenario_scope": ["泌尿"],
         "doc_id": "EDU-URINARY-CARE",
         "version": "1.1",
         "text": "若出現用力排尿卻無尿液排出、反覆進出砂盆或精神明顯變差，屬需要立即就醫的危險徵兆。",
@@ -151,6 +178,7 @@ EDUCATION_PASSAGES: List[Dict[str, Any]] = [
     },
     {
         "passage_id": "EDU-GI-001",
+        "scenario_scope": ["腸胃"],
         "doc_id": "EDU-GI-CARE",
         "version": "1.0",
         "text": "單次軟便且精神食慾正常時，可先觀察並記錄排便次數與性狀，維持乾淨飲水，避免臨時更換飼料。",
@@ -162,6 +190,7 @@ EDUCATION_PASSAGES: List[Dict[str, Any]] = [
     },
     {
         "passage_id": "EDU-GI-002",
+        "scenario_scope": ["腸胃"],
         "doc_id": "EDU-GI-CARE",
         "version": "1.0",
         "text": "出現持續嘔吐、血便、精神變差或無法留住水分時，應立即就醫評估脫水與電解質狀況。",
@@ -173,6 +202,7 @@ EDUCATION_PASSAGES: List[Dict[str, Any]] = [
     },
     {
         "passage_id": "EDU-DERM-001",
+        "scenario_scope": ["皮膚耳部"],
         "doc_id": "EDU-DERM-CARE",
         "version": "1.0",
         "text": "輕微搔癢可先記錄搔癢部位、頻率與是否有跳蚤痕跡，維持環境清潔，並避免自行使用人用藥膏。",
@@ -184,6 +214,7 @@ EDUCATION_PASSAGES: List[Dict[str, Any]] = [
     },
     {
         "passage_id": "EDU-DERM-002",
+        "scenario_scope": ["皮膚耳部"],
         "doc_id": "EDU-DERM-CARE",
         "version": "1.0",
         "text": "耳道用藥前必須先由獸醫確認耳膜完整性，部分外用藥於耳膜破損時具風險。日常可觀察耳道異味、紅腫與分泌物變化。",
@@ -195,6 +226,7 @@ EDUCATION_PASSAGES: List[Dict[str, Any]] = [
     },
     {
         "passage_id": "EDU-RES-001",
+        "scenario_scope": ["呼吸"],
         "doc_id": "EDU-RESP-CARE",
         "version": "1.0",
         "text": "輕微上呼吸道症狀可保持環境通風與適當濕度，並記錄打噴嚏頻率、鼻分泌物性狀與食慾變化。",
@@ -206,6 +238,7 @@ EDUCATION_PASSAGES: List[Dict[str, Any]] = [
     },
     {
         "passage_id": "EDU-RES-002",
+        "scenario_scope": ["呼吸"],
         "doc_id": "EDU-RESP-CARE",
         "version": "1.0",
         "text": "呼吸費力、開口呼吸或黏膜顏色發紫發白屬立即危及生命的徵兆，應避免過度保定並儘速送醫。貓的開口呼吸尤其危險。",
@@ -217,6 +250,7 @@ EDUCATION_PASSAGES: List[Dict[str, Any]] = [
     },
     {
         "passage_id": "EDU-POL-001",
+        "scenario_scope": ["跨情境"],
         "doc_id": "EDU-REG-POLICY",
         "version": "1.0",
         "text": "依動物用藥品管理法及獸醫師（佐）處方藥品販賣及使用管理辦法，處方藥須由執業獸醫師診斷後開立處方，方得販賣及使用。",
@@ -228,6 +262,7 @@ EDUCATION_PASSAGES: List[Dict[str, Any]] = [
     },
     {
         "passage_id": "EDU-POL-002",
+        "scenario_scope": ["跨情境"],
         "doc_id": "EDU-REG-POLICY",
         "version": "1.0",
         "text": "疾病確診需結合理學檢查與檢驗結果由獸醫師判斷，衛教資訊不得取代診斷。",
@@ -239,6 +274,7 @@ EDUCATION_PASSAGES: List[Dict[str, Any]] = [
     },
     {
         "passage_id": "EDU-TOX-001",
+        "scenario_scope": ["跨情境"],
         "doc_id": "EDU-TOXICOLOGY",
         "version": "1.0",
         "text": "乙醯胺酚（普拿疼）對貓具高度毒性，NSAIDs 類人用止痛藥可能造成犬貓腎損傷與消化道潰瘍，人用藥不得直接用於犬貓。",
@@ -250,6 +286,7 @@ EDUCATION_PASSAGES: List[Dict[str, Any]] = [
     },
     {
         "passage_id": "EDU-TOX-002",
+        "scenario_scope": ["跨情境"],
         "doc_id": "EDU-TOXICOLOGY",
         "version": "1.0",
         "text": "含 permethrin 之犬用體外寄生蟲產品對貓具嚴重神經毒性，可能致命，不得跨物種使用。",
@@ -261,6 +298,7 @@ EDUCATION_PASSAGES: List[Dict[str, Any]] = [
     },
     {
         "passage_id": "EDU-EMG-001",
+        "scenario_scope": ["跨情境", "泌尿"],
         "doc_id": "EDU-EMERGENCY",
         "version": "1.2",
         "text": "貓隻反覆進出砂盆且無尿液排出時，須高度懷疑尿道阻塞。此情況在公貓可於數小時內造成高血鉀與急性腎損傷而危及生命，需立即急診處置，居家用藥無法解除阻塞。",
@@ -272,6 +310,7 @@ EDUCATION_PASSAGES: List[Dict[str, Any]] = [
     },
     {
         "passage_id": "EDU-EMG-002",
+        "scenario_scope": ["跨情境"],
         "doc_id": "EDU-EMERGENCY",
         "version": "1.2",
         "text": "疑似中毒時不應自行催吐或給藥，請攜帶包裝或殘留物並記錄攝入時間與估計份量後立即就醫。",
@@ -283,6 +322,7 @@ EDUCATION_PASSAGES: List[Dict[str, Any]] = [
     },
     {
         "passage_id": "EDU-EMG-003",
+        "scenario_scope": ["跨情境"],
         "doc_id": "EDU-EMERGENCY",
         "version": "1.2",
         "text": "抽搐發作時應移開周邊硬物、勿將手放入動物口中，記錄發作起訖時間；持續超過五分鐘或連續發作屬危及生命狀況。",
@@ -440,18 +480,46 @@ class KnowledgeBase:
         return card
 
     def _load_passages(self) -> None:
-        for rec in EDUCATION_PASSAGES:
+        records = list(EDUCATION_PASSAGES)
+        if os.path.exists(EDUCATION_PATH):
+            try:
+                with open(EDUCATION_PATH, "r", encoding="utf-8") as fh:
+                    payload = json.load(fh)
+                if not isinstance(payload, list):
+                    raise ValueError("education_passages.json 必須是 JSON array")
+                records.extend(payload)
+            except (json.JSONDecodeError, OSError, ValueError) as exc:
+                raise ValueError(f"無法載入衛教文件庫 {EDUCATION_PATH}: {exc}") from exc
+
+        seen_ids = set()
+        for rec in records:
+            required = ("passage_id", "doc_id", "version", "text")
+            missing = [field for field in required if not rec.get(field)]
+            if missing:
+                raise ValueError(
+                    f"衛教文件缺少必要欄位 {', '.join(missing)}: {rec!r}"
+                )
+            passage_id = str(rec["passage_id"])
+            if passage_id in seen_ids:
+                raise ValueError(f"衛教文件 passage_id 重複: {passage_id}")
+            seen_ids.add(passage_id)
+            source_type, source_org = _source_metadata(rec)
             p = SourcePassage(
-                passage_id=rec["passage_id"],
+                passage_id=passage_id,
                 doc_id=rec["doc_id"],
                 version=rec["version"],
                 text=rec["text"],
                 source_url=rec.get("source_url"),
+                source_title=rec.get("source_title") or rec["doc_id"],
+                source_org=source_org,
+                source_type=source_type,
                 issue_date_iso=rec.get("issue_date_iso"),
                 expiry_date_iso=rec.get("expiry_date_iso"),
                 is_expired=self._passage_expired(rec.get("expiry_date_iso")),
                 review_status=rec.get("review_status", "approved"),
                 species_scope=list(rec.get("species_scope") or []),
+                scenario_scope=list(rec.get("scenario_scope") or []),
+                fetched_at=rec.get("fetched_at"),
             )
             self.passages[p.passage_id] = p
 
@@ -520,6 +588,35 @@ class KnowledgeBase:
         """通過文件效期閘門的段落 (提案 §7.1)。"""
         return [p for p in self.passages.values() if not p.is_expired and p.review_status == "approved"]
 
+    def education_passages(
+        self, scenario: str, species: Optional[str] = None, limit: int = 4,
+        query: str = "",
+    ) -> List[SourcePassage]:
+        """先依**情境標註**過濾，再以原始提問在同情境內排序。
+
+        原本走 `search_passages` 的關鍵字計分：情境查詢字串（如腸胃的
+        「嘔吐 腹瀉 食慾 飲水」）只要有任一 2-gram 命中就得分，沒有最低門檻，
+        因此問「貓軟便」會一併撈到呼吸道段落（命中「食慾」）與泌尿段落
+        （命中「飲水」）。那些段落有來源、通得過主張驗證，但對這次提問不切題。
+
+        情境是段落的標註資料（`scenario_scope`），因此關鍵詞只會調整同情境
+        文件的先後順序，不會把其他情境的段落帶入候選。
+        """
+        out = [
+            p
+            for p in self.valid_passages()
+            if scenario in p.scenario_scope
+            and not (species and p.species_scope and species not in p.species_scope)
+        ]
+        terms = _tokenize(query)
+        out.sort(
+            key=lambda p: (
+                -sum(1 for term in terms if term in p.text),
+                p.passage_id,
+            )
+        )
+        return out[:limit]
+
     def search_passages(
         self, query: str, species: Optional[str] = None, limit: int = 5,
         include_expired: bool = False,
@@ -551,7 +648,14 @@ class KnowledgeBase:
         """回傳 (有效產品清單, 被效期閘門排除的產品清單)。"""
         candidates: List[ProductCard] = []
         for p in self.products:
-            if species and p.species and species not in p.species:
+            # 指定物種時，**核准物種不明的產品一律排除**。
+            # 原本的條件是 `p.species and species not in p.species`，
+            # 空清單會通過任何物種篩選 —— 等於把「不知道核准給誰用」
+            # 當成「適用於所有物種」。母體 200 筆中有 9 筆沒有物種欄位，
+            # 查「貓」會混進 2 筆，且畫面上看不出差別。
+            # 這與 VG-POL-431（物種未指明時不得提供產品資訊）是同一個立場：
+            # 無法確認核准物種，就不得以該物種的名義呈現。
+            if species and species not in p.species:
                 continue
             if dosage_form and dosage_form not in (p.dosage_form or ""):
                 continue

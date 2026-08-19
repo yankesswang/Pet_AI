@@ -200,3 +200,87 @@ def test_as_of_shift_changes_verdict():
     after = date(2026, 8, 19)
     assert compute_expiry(CASE_07363["expiry_date_iso"], before)[0] is False
     assert compute_expiry(CASE_07363["expiry_date_iso"], after)[0] is True
+
+
+# ==========================================================================
+# 證據資格的規則稽核軌跡
+#
+# VG-EVD-440/441/442 三條規則原本從未被評估（沒有任何地方跑
+# severities=["evidence"]），因此「因為證據不足而拒答」的回答，護照裡
+# 找不到任何規則編號可回查。以下測試釘住這條軌跡。
+# ==========================================================================
+def _passage(pid: str, text: str, *, expired: bool = False) -> SourcePassage:
+    return SourcePassage(
+        passage_id=pid,
+        doc_id=f"{pid}-DOC",
+        version="1.0",
+        text=text,
+        is_expired=expired,
+        review_status="approved",
+        expiry_date_iso="2020-01-01" if expired else "2028-01-01",
+    )
+
+
+def _evidence_ctx(passages):
+    """以已驗證獸醫身分建構 —— 飼主端會先被資料資格擋在黃色，走不到證據資格。"""
+    return GateContext(
+        facts={"species": "cat", "role": "vet", "scenarios": ["泌尿"], "symptoms": []},
+        role=Role.VET,
+        vet_verified=True,
+        claims=[make_claim("C01", "貓咪尿道阻塞需要立即就醫處置。")],
+        candidate_passages=list(passages),
+    )
+
+
+def test_expired_only_evidence_records_rule_ids_in_audit_trail():
+    gate = EvidenceGate()
+    check = gate.check_evidence(
+        _evidence_ctx([_passage("P1", "貓咪尿道阻塞需要立即就醫處置。", expired=True)])
+    )
+    assert check.passed is False
+    fired = {r.rule_id for r in check.rules_fired}
+    assert "VG-EVD-440" in fired, "文件過期卻沒有留下規則編號"
+    assert "VG-EVD-441" in fired, "無有效來源卻沒有留下規則編號"
+
+
+def test_valid_evidence_fires_no_evidence_rule():
+    gate = EvidenceGate()
+    check = gate.check_evidence(
+        _evidence_ctx([_passage("P1", "貓咪尿道阻塞需要立即就醫處置。")])
+    )
+    assert check.passed is True
+    assert check.rules_fired == []
+
+
+def test_evidence_refusal_passport_names_the_rule():
+    """端到端：拒答的護照必須指得出是哪一條規則。"""
+    gate = EvidenceGate()
+    decision = gate.decide(
+        _evidence_ctx([_passage("P1", "貓咪尿道阻塞需要立即就醫處置。", expired=True)])
+    )
+    assert decision.refusal_reason == RefusalReason.INSUFFICIENT_EVIDENCE
+    assert {r.rule_id for r in decision.fired_rules} >= {"VG-EVD-440", "VG-EVD-441"}
+    # 輸出白名單不因規則而縮減：拒答時仍應給得出就診摘要
+    assert "visit_summary" in decision.allowed_output_types
+
+
+def test_species_unknown_products_never_match_a_species_filter():
+    """核准物種不明 ≠ 適用所有物種。
+
+    母體中有 9 筆沒有物種欄位；若讓空清單通過任何篩選，查「貓」會拿到
+    無法確認核准給貓用的產品，且畫面上看不出差別。這與 VG-POL-431
+    （物種未指明時不得提供產品資訊）是同一個立場。
+    """
+    kb = get_kb()
+    unknown = [p for p in kb.products if not p.species]
+    assert unknown, "測試前提：母體應含物種欄位空白的產品"
+
+    for species in ("cat", "dog"):
+        valid, expired = kb.search_products(species=species, limit=500)
+        for p in valid + expired:
+            assert p.species, f"{p.licence_no} 物種不明卻通過 {species} 篩選"
+            assert species in p.species
+
+    # 不指定物種時仍檢索得到，不是把資料藏起來
+    all_valid, _ = kb.search_products(limit=500)
+    assert any(not p.species for p in all_valid)

@@ -27,13 +27,28 @@
 
 ## 安裝與啟動
 
+**最快的方式（前後端一起起，等後端真的回應才提示可以開）：**
+
 ```bash
 export NVM_DIR="$HOME/.nvm"; . "$NVM_DIR/nvm.sh"   # 每個新 shell 都要先跑這行
-cd /home/trx50/Project/Pet_AI/frontend
-
-npm install        # 安裝相依套件
-npm run dev        # 開發伺服器 → http://localhost:5173
+cd <repo>
+./scripts/dev.sh
 ```
+
+只跑前端：
+
+```bash
+cd <repo>/frontend
+npm install        # 首次執行
+npm run dev        # → http://127.0.0.1:5173
+```
+
+> **「我要提問」與「文件庫」兩頁需要後端在跑**（見下一節）。只開前端的話，
+> 這兩頁會顯示「連不上後端」，那不是壞掉 —— 是它們刻意不使用假資料。
+> 後端啟動方式見 [`backend/README.md`](../backend/README.md)，或直接用上面的 `dev.sh`。
+
+> 開發伺服器綁在 `127.0.0.1`（見 `vite.config.ts`）。Vite 預設綁 `localhost`，
+> 在 macOS 上只會聽 IPv6 的 `[::1]`，導致 `http://127.0.0.1:5173` 連線被拒。
 
 其他指令：
 
@@ -47,7 +62,13 @@ npm run preview    # 預覽 build 後的結果
 
 ## Mock / Live 資料切換
 
-**Demo 預設完全離線執行，不需要後端也能跑完整三幕。** 這是刻意的設計 —— 簡報現場不能開天窗。
+**劇本式導覽（三幕／黃色／對照組）預設完全離線執行，不需要後端。**
+這是刻意的設計 —— 簡報現場不能開天窗。
+
+**但「我要提問」與「文件庫」兩頁例外：它們沒有 mock 備援，一定要後端。**
+理由是這兩頁的價值完全建立在「畫面上的東西是真的」：
+拿罐頭答案冒充真實判定、或顯示一個不存在的文件庫，會讓所有核對結論失效，
+比沒有這兩頁更糟。後端不通時它們會明講，而不是靜默退回假資料。
 
 切換方式為單一開關，位於 `.env`（可從 `.env.example` 複製）：
 
@@ -57,7 +78,11 @@ VITE_USE_MOCKS=false   # 改呼叫 FastAPI 後端，經 Vite proxy /api → http
 ```
 
 在 `live` 模式下，若後端無回應或回傳錯誤，`src/lib/api.ts` 會**自動退回 mock 資料**，
-並在畫面右上角將標記從 `LIVE API` 改為 `LIVE → MOCK 備援`，因此 Demo 在任何情況下都不會中斷。
+並在畫面右上角將標記從 `LIVE API` 改為 `LIVE → MOCK 備援`，因此劇本頁在任何情況下都不會中斷。
+
+`VITE_USE_MOCKS` **不影響**「我要提問」與「文件庫」—— 它們一律走真實後端
+（`consultFree()` / `knowledgeLibrary()` 不經過 `withFallback()`），
+頂欄也因此改標示「即時後端資料，無備援」。
 
 ### 後端 API 對應
 
@@ -67,6 +92,8 @@ VITE_USE_MOCKS=false   # 改呼叫 FastAPI 後端，經 Vite proxy /api → http
 | `/api/vet/search` | POST | 藍色模式產品檢索（需授權 token） |
 | `/api/passport/{audit_id}` | GET | 取回單筆回答護照 |
 | `/api/admin/impact-replay` | POST | 影響回溯 |
+| `/api/knowledge` | GET | 文件庫瀏覽（產品明細需 token） |
+| `/api/compare` | POST | A/B/C 三組對照 |
 | `/api/health` | GET | 健康檢查 |
 
 > **狀態命名差異：** 後端以 `YELLOW` 表示「資訊不足」，前端型別統一使用 `AMBER`。
@@ -77,10 +104,14 @@ VITE_USE_MOCKS=false   # 改呼叫 FastAPI 後端，經 Vite proxy /api → http
 
 ## 畫面導覽
 
-導覽列共五頁，建議依序觀看：
+導覽列共八頁。分頁可用網址 hash 直接連結（`#live`、`#library`、`#act1`…），
+重新整理會停在原地。
 
 | 頁面 | 狀態 | 證明重點 |
 | --- | --- | --- |
+| **我要提問（LIVE）** | 全部 | **需要後端。** 使用者自己提問，畫面上的每個字都是真的判定；附檢索軌跡 |
+| **文件庫** | — | **需要後端。** 攤開受控知識庫全部內容，可拿回答裡的段落編號回來核對 |
+| **對照組 A/B/C** | — | 同一輸入跑三種架構，差別不在模型多強，而在有沒有能力先判斷能不能答 |
 | **四種狀態總覽** | — | 四種狀態、五項資格檢查、回答護照八欄位、真實資料基礎 |
 | **第一幕｜系統拒絕用藥要求** | 🔴 RED | AI 的價值不是每次都回答，而是知道何時必須停止 |
 | **黃色｜資訊不足時的追問** | 🟡 AMBER | 系統不用推測值填補缺漏，追問題目由規則庫固定提供 |
@@ -114,7 +145,10 @@ src/
 │   ├── Act1.tsx          第一幕 — 紅色拒答
 │   ├── Act2.tsx          第二幕 — 角色分權、藍色專業模式
 │   ├── Act3.tsx          第三幕 — 影響回溯、沉默失效
-│   └── AmberAct.tsx      黃色狀態 — 固定必要追問
+│   ├── AmberAct.tsx      黃色狀態 — 固定必要追問
+│   ├── Compare.tsx       A/B/C 三組對照
+│   ├── LiveAsk.tsx       我要提問 — 真實判定 + 檢索軌跡（無 mock 備援）
+│   └── Library.tsx       文件庫 — 受控知識庫瀏覽（無 mock 備援）
 ├── components/
 │   ├── StateVisuals.tsx  狀態標記、判決橫幅、四狀態圖例
 │   ├── Passport.tsx      回答護照、可點擊主張、來源段落

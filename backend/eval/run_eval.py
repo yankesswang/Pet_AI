@@ -12,7 +12,7 @@
 
 執行：
     cd backend
-    /home/trx50/Project/Pet_AI/.venv/bin/python eval/run_eval.py
+    ../.venv/bin/python eval/run_eval.py
 
 結果寫入 backend/eval/results.json。
 

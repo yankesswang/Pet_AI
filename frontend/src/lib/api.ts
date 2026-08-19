@@ -10,7 +10,7 @@
 import type {
   ConsultResponse, VetSearchResponse, ImpactReplayResponse, AnswerPassport,
   CompareResponse, CompareArm, CompareCitation, CompareDimension, CompareDimensionKey, GateState,
-  FollowUpQuestion,
+  FollowUpQuestion, KnowledgeLibrary, HoldoutResults,
 } from './types'
 import { ACT1_CONSULT, ACT2_VET_SEARCH, ACT3_IMPACT_REPLAY, AMBER_CONSULT, COMPARE_FIXTURE, COMPARE_QUESTION } from '../mocks'
 
@@ -547,6 +547,26 @@ export async function consultFree(
   }
 }
 
+/**
+ * GET /api/knowledge — 文件庫瀏覽（LIVE ONLY，無 mock 備援）。
+ *
+ * 這一頁的用途是讓人核對「回答裡的段落是不是真的來自這個庫」。
+ * 若後端不通就退回 fixtures，顯示的會是一個**不存在的文件庫**，
+ * 核對出來的結論全部無效 —— 那比沒有這頁更糟。因此失敗即拋出。
+ *
+ * @param vetToken 帶入後解鎖產品許可證明細；不帶則只拿得到統計數字。
+ * @param species  產品清單的物種篩選（cat / dog）。衛教段落不受此參數影響。
+ */
+export async function knowledgeLibrary(
+  vetToken?: string,
+  species?: 'cat' | 'dog',
+): Promise<KnowledgeLibrary> {
+  const qs = species ? `?species=${species}` : ''
+  return request<KnowledgeLibrary>(`/api/knowledge${qs}`, {
+    headers: vetToken ? { 'X-Vet-Token': vetToken } : undefined,
+  })
+}
+
 /** 供 LIVE 頁使用的健康檢查 — 不受 VITE_USE_MOCKS 影響，永遠真的打後端 */
 export async function healthLive(): Promise<{ ok: boolean; detail?: string }> {
   try {
@@ -555,4 +575,15 @@ export async function healthLive(): Promise<{ ok: boolean; detail?: string }> {
   } catch (e) {
     return { ok: false, detail: e instanceof Error ? e.message : String(e) }
   }
+}
+
+/**
+ * 有效性驗證 — 獨立留出測試集。
+ *
+ * 後端**當場把 107 例跑完**才回傳（約數百毫秒），不是讀預先寫好的結果檔。
+ * 一頁宣稱「這是我們的驗證數字」卻讀靜態檔，就跟拿罐頭回答冒充判定一樣
+ * 無法被檢查，因此這裡也不做 mock 備援：後端不通就明講。
+ */
+export async function evalHoldout(refresh = false): Promise<HoldoutResults> {
+  return request<HoldoutResults>(`/api/eval/holdout${refresh ? '?refresh=true' : ''}`)
 }
