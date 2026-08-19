@@ -2,7 +2,7 @@
  * API 層 — 單一開關切換 mock / live。
  *
  *   VITE_USE_MOCKS=true   → 完全離線，使用 src/mocks 的 fixtures（預設）
- *   VITE_USE_MOCKS=false  → 呼叫 FastAPI 後端，經 Vite proxy /api → localhost:8000
+ *   VITE_USE_MOCKS=false  → 呼叫 FastAPI 後端，經 Vite proxy /api → localhost:2222
  *
  * live 模式下若後端無回應，會自動退回 mock 並在 UI 標示，
  * 確保 Demo 在任何情況下都不會開天窗。

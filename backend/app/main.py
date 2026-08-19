@@ -2,7 +2,7 @@
 
 啟動：
     cd backend
-    /home/trx50/Project/Pet_AI/.venv/bin/python -m uvicorn app.main:app --reload --port 8000
+    /home/trx50/Project/Pet_AI/.venv/bin/python -m uvicorn app.main:app --reload --port 2222
 """
 from __future__ import annotations
 

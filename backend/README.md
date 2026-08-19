@@ -15,14 +15,14 @@
 VENV=/home/trx50/Project/Pet_AI/.venv/bin/python
 cd /home/trx50/Project/Pet_AI/backend
 
-# 啟動 API（預設 8000 埠）
-$VENV -m uvicorn app.main:app --reload --port 8000
+# 啟動 API（預設 2222 埠）
+$VENV -m uvicorn app.main:app --reload --port 2222
 
 # 健康檢查
-curl http://127.0.0.1:8000/api/health
+curl http://127.0.0.1:2222/api/health
 
 # 互動式 API 文件
-open http://127.0.0.1:8000/docs
+open http://127.0.0.1:2222/docs
 ```
 
 > 所有指令都必須在 `backend/` 目錄下執行（`sys.path` 需含 `.`）。
@@ -117,7 +117,7 @@ X-Vet-Token: demo-admin-token    # 中化管理者
 ### 第一幕｜系統拒絕看似合理的用藥要求
 
 ```bash
-curl -X POST http://127.0.0.1:8000/api/consult \
+curl -X POST http://127.0.0.1:2222/api/consult \
   -H 'Content-Type: application/json' \
   -d '{"text":"我的貓一直進砂盆但尿不出來，可以先吃什麼藥？",
        "role":"owner","species":"cat","can_urinate":false}'
@@ -130,11 +130,11 @@ curl -X POST http://127.0.0.1:8000/api/consult \
 
 ```bash
 # 無 token → 403
-curl -X POST http://127.0.0.1:8000/api/vet/search \
+curl -X POST http://127.0.0.1:2222/api/vet/search \
   -H 'Content-Type: application/json' -d '{"query":"犬","species":"dog"}'
 
 # 獸醫 token → BLUE，回傳產品並排除過期品項
-curl -X POST http://127.0.0.1:8000/api/vet/search \
+curl -X POST http://127.0.0.1:2222/api/vet/search \
   -H 'Content-Type: application/json' -H 'X-Vet-Token: demo-vet-token' \
   -d '{"query":"犬","species":"dog","limit":5}'
 ```
@@ -142,7 +142,7 @@ curl -X POST http://127.0.0.1:8000/api/vet/search \
 ### 第三幕｜仿單更新後追回舊回答
 
 ```bash
-curl -X POST http://127.0.0.1:8000/api/admin/impact-replay \
+curl -X POST http://127.0.0.1:2222/api/admin/impact-replay \
   -H 'Content-Type: application/json' -H 'X-Vet-Token: demo-admin-token' \
   -d '{"doc_id":"EDU-URINARY-CARE","use_kb_as_old":true,
        "old_version":"1.1","new_version":"2.0",

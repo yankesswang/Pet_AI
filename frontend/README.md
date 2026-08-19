@@ -53,7 +53,7 @@ npm run preview    # 預覽 build 後的結果
 
 ```bash
 VITE_USE_MOCKS=true    # 預設。完全使用 src/mocks 的 fixtures，不發任何網路請求
-VITE_USE_MOCKS=false   # 改呼叫 FastAPI 後端，經 Vite proxy /api → http://localhost:8000
+VITE_USE_MOCKS=false   # 改呼叫 FastAPI 後端，經 Vite proxy /api → http://localhost:2222
 ```
 
 在 `live` 模式下，若後端無回應或回傳錯誤，`src/lib/api.ts` 會**自動退回 mock 資料**，
