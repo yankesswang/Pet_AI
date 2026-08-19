@@ -152,7 +152,12 @@ class RuleRef(BaseModel):
     severity: str
     scenario: str
     outcome: str  # fired | not_fired | evaluated_missing_data
-    detail: str = ""
+    detail: str = ""  # 機器判定式，供稽核與除錯
+    # 以下為給飼主／獸醫閱讀的自然語言說明（提案 §八：觸發規則需人類可讀）
+    reason_zh: str = ""  # 這條規則為何成立／未成立
+    action_zh: str = ""  # 規則成立後系統做了什麼
+    owner_message: str = ""  # 獸醫審核過的飼主說明
+    matched_zh: List[str] = Field(default_factory=list)  # 實際命中的症狀描述
 
 
 class CheckResult(BaseModel):

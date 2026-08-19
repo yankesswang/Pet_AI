@@ -51,6 +51,84 @@ POLICY_INTENTS = {
 }
 
 
+# system_action 代碼 → 中文說明（給飼主與獸醫閱讀，非工程用語）
+_ACTION_ZH = {
+    "halt_product_retrieval": "立即停止產品檢索，改為急診轉介",
+    "ask_required_questions": "先提出必要追問，補齊資訊後才繼續",
+    "allow_owner_education": "提供經獸醫審核的衛教內容",
+    "allow_vet_product_search": "解鎖獸醫專業產品檢索",
+    "enforce_role_policy": "依角色權限遮蔽不得顯示的內容",
+    "enforce_species_policy": "套用物種限制，避免跨物種誤用",
+    "block_expired_sources": "排除已過期或失效的文件來源",
+    "refuse_no_evidence": "查無有效來源，拒絕作答",
+    "refuse_conflict": "來源存在衝突，拒絕作答並轉介獸醫",
+    "deny_role_escalation": "拒絕未經驗證的權限提升",
+    "deny_case_access": "拒絕未授權的個案存取",
+}
+
+# outcome 代碼 → 中文
+_OUTCOME_ZH = {
+    "fired": "規則成立",
+    "not_fired": "規則未成立",
+    "evaluated_missing_data": "資訊不足，無法判定",
+}
+
+
+# 欄位代碼 → 中文（用於說明「缺少什麼資訊」）
+_FIELD_ZH = {
+    "mentation": "精神狀態", "temperature_c": "體溫", "vomiting": "是否嘔吐",
+    "vomit_count_24h": "24 小時嘔吐次數", "can_keep_water": "能否喝水",
+    "breathing_effort": "呼吸費力程度", "mucous_membrane_color": "黏膜顏色",
+    "human_drug_involved": "是否使用人用藥", "toxin_exposure": "是否接觸毒物",
+    "can_urinate": "能否排尿", "duration_hours": "持續時間",
+    "body_weight_kg": "體重", "sex": "性別", "age_months": "年齡",
+    "severity": "嚴重度", "current_medications": "目前用藥",
+}
+
+
+def _missing_fields_zh(detail: str) -> list[str]:
+    """從判定軌跡萃取「缺值」欄位，轉成中文供使用者閱讀。"""
+    out: list[str] = []
+    for seg in (detail or "").split(";"):
+        seg = seg.strip()
+        # 兩種缺值表示法：「<field> 缺值」與「<field>=None in [...] -> unknown」
+        if "缺值" not in seg and "=None" not in seg:
+            continue
+        token = seg.split(" ", 1)[0].split("=")[0].strip()
+        zh = _FIELD_ZH.get(token)
+        if zh and zh not in out:
+            out.append(zh)
+    return out
+
+
+def _human_reason(ev: RuleEvaluation) -> tuple[str, list[str]]:
+    """把規則判定轉成一句人話，並列出實際命中的症狀描述。
+
+    後端 detail 是機器判定式（供稽核），此處另外產生給人閱讀的說明。
+    """
+    rule = ev.rule
+    facts = getattr(ev, "facts", None) or {}
+    symptoms = facts.get("symptoms") or []
+    presentations = getattr(rule, "presentations", None) or []
+    matched = [s for s in symptoms if s in presentations]
+
+    if ev.outcome == "fired":
+        if matched:
+            return f"飼主描述中出現「{'、'.join(matched)}」，符合本規則的急症表現。", matched
+        return f"本次描述符合「{rule.title}」的判定條件。", matched
+    if ev.outcome == "evaluated_missing_data":
+        missing = _missing_fields_zh(ev.detail)
+        if missing:
+            return (
+                f"尚未取得{'、'.join(missing)}，無法完全排除這條規則，系統採保守處理。".replace(
+                    "取得24", "取得 24"
+                ),
+                matched,
+            )
+        return "本次資訊不足以判定這條規則，系統採保守處理。", matched
+    return "本次描述不符合這條規則的條件，未觸發。", matched
+
+
 def _rule_ref(ev: RuleEvaluation) -> RuleRef:
     return RuleRef(
         rule_id=ev.rule.rule_id,
@@ -60,6 +138,14 @@ def _rule_ref(ev: RuleEvaluation) -> RuleRef:
         scenario=ev.rule.scenario,
         outcome=ev.outcome,
         detail=ev.detail,
+        reason_zh=_human_reason(ev)[0],
+        action_zh=(
+            _ACTION_ZH.get(getattr(ev.rule, "system_action", ""), "")
+            if ev.outcome == "fired"
+            else _OUTCOME_ZH.get(ev.outcome, "")
+        ),
+        owner_message=getattr(ev.rule, "owner_message", "") or "",
+        matched_zh=_human_reason(ev)[1],
     )
 
 

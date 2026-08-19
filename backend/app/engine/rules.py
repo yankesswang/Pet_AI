@@ -68,6 +68,7 @@ class RuleEvaluation:
     outcome: str  # fired | not_fired | evaluated_missing_data
     detail: str = ""
     matched_conditions: List[str] = field(default_factory=list)
+    facts: Dict[str, Any] = field(default_factory=dict)  # 供產生人類可讀說明
 
 
 class RuleValidationError(ValueError):
@@ -315,11 +316,12 @@ class RuleEngine:
                         rule=rule,
                         outcome="not_fired",
                         detail=f"物種不適用 (案例={species}, 規則={rule.species})",
+                        facts=facts,
                     )
                 )
                 continue
             if not rule.red_flag_conditions:
-                out.append(RuleEvaluation(rule=rule, outcome="not_fired", detail="無觸發條件"))
+                out.append(RuleEvaluation(rule=rule, outcome="not_fired", detail="無觸發條件", facts=facts))
                 continue
 
             trace: List[str] = []
@@ -335,6 +337,7 @@ class RuleEngine:
                     outcome=outcome,
                     detail="; ".join(trace[-4:]) if trace else "",
                     matched_conditions=trace,
+                    facts=facts,
                 )
             )
         return out

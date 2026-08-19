@@ -145,14 +145,21 @@ function adaptPassport(raw: Record<string, unknown> | undefined, fallback: unkno
     gate_state: normalizeGateState(raw.answer_state ?? fb.gate_state),
     // 後端分成 rules_fired / rules_failed，UI 使用單一 rules 陣列 + fired 旗標
     rules: [
+      // basis_zh 顯示後端產生的自然語言說明（reason_zh）；
+      // 機器判定式 detail 僅保留在 raw_detail，供稽核而非給使用者閱讀。
       ...fired.map((r) => ({
         rule_id: r.rule_id, version: r.version, name_zh: r.title,
-        action_zh: r.outcome === 'fired' ? '規則成立，觸發對應閘門動作' : String(r.outcome ?? ''),
-        basis_zh: r.detail, severity: r.severity, scenario_zh: r.scenario, fired: true,
+        action_zh: r.action_zh || '觸發對應閘門動作',
+        basis_zh: r.reason_zh || '',
+        clinical_source: r.owner_message || '',
+        raw_detail: r.detail,
+        severity: r.severity, scenario_zh: r.scenario, fired: true,
       })),
       ...failed.map((r) => ({
         rule_id: r.rule_id, version: r.version, name_zh: r.title,
-        action_zh: '未成立', basis_zh: r.detail,
+        action_zh: r.action_zh || '未成立',
+        basis_zh: r.reason_zh || '',
+        raw_detail: r.detail,
         severity: r.severity, scenario_zh: r.scenario, fired: false,
       })),
     ],
