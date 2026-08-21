@@ -139,7 +139,9 @@ def test_retrieval_trace_reports_full_funnel():
     t = resp.retrieval
     assert t is not None
     c = t["counts"]
-    assert c["library"] == 47
+    assert c["library"] == sum(
+        1 for pid in get_kb().passages if pid.startswith("EDU-")
+    )
     assert c["candidates"] + c["excluded"] == c["library"]
     assert c["claims"] <= t["claim_limit"]
     assert c["displayed"] <= c["verified"] <= c["claims"]

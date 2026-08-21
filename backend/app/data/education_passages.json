@@ -1,11 +1,15 @@
 [
   {
     "passage_id": "EDU-URI-003",
-    "scenario_scope": ["泌尿"],
+    "scenario_scope": [
+      "泌尿"
+    ],
     "doc_id": "MSD-CAT-URINARY-DETECTION",
     "version": "2024.09",
     "text": "就診前可記錄飲水量是否改變、排尿頻率與尿量、尿液外觀、排尿時的行為，以及目前使用的藥物與飲食；這些資訊有助於獸醫評估泌尿問題。",
-    "species_scope": ["cat"],
+    "species_scope": [
+      "cat"
+    ],
     "issue_date_iso": "2024-09-01",
     "expiry_date_iso": "2027-08-19",
     "review_status": "approved",
@@ -13,11 +17,16 @@
   },
   {
     "passage_id": "EDU-URI-004",
-    "scenario_scope": ["泌尿"],
+    "scenario_scope": [
+      "泌尿"
+    ],
     "doc_id": "MSD-OBSTRUCTIVE-UROPATHY",
     "version": "2025.06",
     "text": "頻繁嘗試排尿、排尿疼痛或只能排出少量尿，可能是尿路阻塞的表現；飼主有時會把用力排尿誤認為便祕。完全無法排尿屬急症，應立即就醫。",
-    "species_scope": ["cat", "dog"],
+    "species_scope": [
+      "cat",
+      "dog"
+    ],
     "issue_date_iso": "2025-06-01",
     "expiry_date_iso": "2027-08-19",
     "review_status": "approved",
@@ -25,11 +34,15 @@
   },
   {
     "passage_id": "EDU-URI-005",
-    "scenario_scope": ["泌尿"],
+    "scenario_scope": [
+      "泌尿"
+    ],
     "doc_id": "MSD-CAT-URINARY-NONINFECTIOUS",
     "version": "2026.05",
     "text": "頻尿、血尿、排尿用力或在砂盆外排尿都可能與下泌尿道問題有關；相似表現也可能來自行為因素，需由獸醫檢查才能區分。",
-    "species_scope": ["cat"],
+    "species_scope": [
+      "cat"
+    ],
     "issue_date_iso": "2026-05-01",
     "expiry_date_iso": "2027-08-19",
     "review_status": "approved",
@@ -37,11 +50,15 @@
   },
   {
     "passage_id": "EDU-URI-006",
-    "scenario_scope": ["泌尿"],
+    "scenario_scope": [
+      "泌尿"
+    ],
     "doc_id": "MSD-CAT-URINARY-DETECTION",
     "version": "2024.09",
     "text": "飲水或排尿量增加不只見於泌尿疾病，也可能與其他全身性問題有關；持續變化時應安排獸醫檢查，不宜只依單一症狀自行判斷。",
-    "species_scope": ["cat"],
+    "species_scope": [
+      "cat"
+    ],
     "issue_date_iso": "2024-09-01",
     "expiry_date_iso": "2027-08-19",
     "review_status": "approved",
@@ -49,11 +66,15 @@
   },
   {
     "passage_id": "EDU-GI-003",
-    "scenario_scope": ["腸胃"],
+    "scenario_scope": [
+      "腸胃"
+    ],
     "doc_id": "MSD-CAT-VOMITING",
     "version": "2024.09",
     "text": "嘔吐通常伴隨流口水、反覆吞嚥、乾嘔與腹部用力；反流則較被動，吐出的食物常未消化。記錄發作過程或拍攝影片可幫助獸醫區分。",
-    "species_scope": ["cat"],
+    "species_scope": [
+      "cat"
+    ],
     "issue_date_iso": "2024-09-01",
     "expiry_date_iso": "2027-08-19",
     "review_status": "approved",
@@ -61,11 +82,15 @@
   },
   {
     "passage_id": "EDU-GI-004",
-    "scenario_scope": ["腸胃"],
+    "scenario_scope": [
+      "腸胃"
+    ],
     "doc_id": "MSD-CAT-VOMITING",
     "version": "2024.09",
     "text": "反覆嘔吐，或嘔吐合併血液、腹痛、精神沉鬱、脫水、虛弱、發燒或體重下降時，需要由獸醫進一步檢查。",
-    "species_scope": ["cat"],
+    "species_scope": [
+      "cat"
+    ],
     "issue_date_iso": "2024-09-01",
     "expiry_date_iso": "2027-08-19",
     "review_status": "approved",
@@ -73,11 +98,15 @@
   },
   {
     "passage_id": "EDU-GI-005",
-    "scenario_scope": ["腸胃"],
+    "scenario_scope": [
+      "腸胃"
+    ],
     "doc_id": "MSD-DOG-DIGESTIVE-INTRO",
     "version": "2026.06",
     "text": "腹瀉可能有多種原因。就診前應記錄排便次數、糞便性狀、是否帶血、近期飲食變動、可能誤食、用藥與其他症狀，供獸醫整體判斷。",
-    "species_scope": ["dog"],
+    "species_scope": [
+      "dog"
+    ],
     "issue_date_iso": "2026-06-01",
     "expiry_date_iso": "2027-08-19",
     "review_status": "approved",
@@ -85,11 +114,15 @@
   },
   {
     "passage_id": "EDU-GI-006",
-    "scenario_scope": ["腸胃"],
+    "scenario_scope": [
+      "腸胃"
+    ],
     "doc_id": "MSD-DOG-STOMACH-INTESTINES",
     "version": "2026.06",
     "text": "大量或持續嘔吐、血便、腹部疼痛、食慾明顯下降或精神沉鬱可能快速造成脫水；幼犬或未完整接種疫苗的犬隻出現這些症狀時應儘速就醫。",
-    "species_scope": ["dog"],
+    "species_scope": [
+      "dog"
+    ],
     "issue_date_iso": "2026-06-01",
     "expiry_date_iso": "2027-08-19",
     "review_status": "approved",
@@ -97,11 +130,16 @@
   },
   {
     "passage_id": "EDU-DERM-003",
-    "scenario_scope": ["皮膚耳部"],
+    "scenario_scope": [
+      "皮膚耳部"
+    ],
     "doc_id": "MSD-ALLERGIC-EAR-DISEASE",
     "version": "2026.06",
     "text": "耳廓與外耳道紅、癢可能和環境或食物過敏有關，並可能續發細菌或酵母菌性外耳炎；反覆發作時需評估根本原因。",
-    "species_scope": ["cat", "dog"],
+    "species_scope": [
+      "cat",
+      "dog"
+    ],
     "issue_date_iso": "2026-06-01",
     "expiry_date_iso": "2027-08-19",
     "review_status": "approved",
@@ -109,11 +147,16 @@
   },
   {
     "passage_id": "EDU-DERM-004",
-    "scenario_scope": ["皮膚耳部"],
+    "scenario_scope": [
+      "皮膚耳部"
+    ],
     "doc_id": "MSD-OTITIS-EXTERNA",
     "version": "2026.04",
     "text": "甩頭、抓耳、疼痛、異味、紅腫或分泌物是外耳炎常見表現。診斷通常需要耳鏡與耳垢細胞學檢查，治療方式取決於實際原因。",
-    "species_scope": ["cat", "dog"],
+    "species_scope": [
+      "cat",
+      "dog"
+    ],
     "issue_date_iso": "2026-04-01",
     "expiry_date_iso": "2027-08-19",
     "review_status": "approved",
@@ -121,11 +164,16 @@
   },
   {
     "passage_id": "EDU-DERM-005",
-    "scenario_scope": ["皮膚耳部"],
+    "scenario_scope": [
+      "皮膚耳部"
+    ],
     "doc_id": "MSD-TOPICAL-TREATMENT",
     "version": "2026.08",
     "text": "外用清潔或藥物產品可能造成刺激或接觸性過敏。使用後若紅、腫、癢或疼痛加劇，應停止自行加用其他產品並聯絡獸醫。",
-    "species_scope": ["cat", "dog"],
+    "species_scope": [
+      "cat",
+      "dog"
+    ],
     "issue_date_iso": "2026-08-01",
     "expiry_date_iso": "2027-08-19",
     "review_status": "approved",
@@ -133,11 +181,16 @@
   },
   {
     "passage_id": "EDU-DERM-006",
-    "scenario_scope": ["皮膚耳部", "跨情境"],
+    "scenario_scope": [
+      "皮膚耳部",
+      "跨情境"
+    ],
     "doc_id": "MSD-CAT-ANAPHYLAXIS",
     "version": "2026.08",
     "text": "突然出現臉部腫脹或蕁麻疹，若同時有呼吸困難、嘔吐、腹瀉、虛弱或倒下，可能是嚴重過敏反應，應立即尋求急診獸醫協助。",
-    "species_scope": ["cat"],
+    "species_scope": [
+      "cat"
+    ],
     "issue_date_iso": "2026-08-01",
     "expiry_date_iso": "2027-08-19",
     "review_status": "approved",
@@ -145,11 +198,15 @@
   },
   {
     "passage_id": "EDU-RES-003",
-    "scenario_scope": ["呼吸"],
+    "scenario_scope": [
+      "呼吸"
+    ],
     "doc_id": "MSD-CAT-RESPIRATORY-INTRO",
     "version": "2024.09",
     "text": "呼吸症狀可記錄鼻分泌物、咳嗽、呼吸是否變快或變淺、是否費力、有無呼吸聲，以及精神與食慾變化，供獸醫判斷問題位置與嚴重度。",
-    "species_scope": ["cat"],
+    "species_scope": [
+      "cat"
+    ],
     "issue_date_iso": "2024-09-01",
     "expiry_date_iso": "2027-08-19",
     "review_status": "approved",
@@ -157,11 +214,17 @@
   },
   {
     "passage_id": "EDU-RES-004",
-    "scenario_scope": ["呼吸", "跨情境"],
+    "scenario_scope": [
+      "呼吸",
+      "跨情境"
+    ],
     "doc_id": "MSD-EMERGENCY-EVALUATION",
     "version": "2025.12",
     "text": "呼吸變得又快又費力、張口呼吸，或牙齦與皮膚出現藍紫色，代表可能嚴重缺氧，屬需要立即處理的急症。",
-    "species_scope": ["cat", "dog"],
+    "species_scope": [
+      "cat",
+      "dog"
+    ],
     "issue_date_iso": "2025-12-01",
     "expiry_date_iso": "2027-08-19",
     "review_status": "approved",
@@ -169,11 +232,17 @@
   },
   {
     "passage_id": "EDU-RES-005",
-    "scenario_scope": ["呼吸", "跨情境"],
+    "scenario_scope": [
+      "呼吸",
+      "跨情境"
+    ],
     "doc_id": "MSD-SMALL-ANIMAL-TRANSPORT",
     "version": "2025.12",
     "text": "動物呼吸困難時應減少刺激與不必要的保定，先聯絡急診院所並依指示運送；運輸容器需保持空氣流通並能觀察動物狀況。",
-    "species_scope": ["cat", "dog"],
+    "species_scope": [
+      "cat",
+      "dog"
+    ],
     "issue_date_iso": "2025-12-01",
     "expiry_date_iso": "2027-08-19",
     "review_status": "approved",
@@ -181,11 +250,15 @@
   },
   {
     "passage_id": "EDU-RES-006",
-    "scenario_scope": ["呼吸"],
+    "scenario_scope": [
+      "呼吸"
+    ],
     "doc_id": "MSD-DOG-RESPIRATORY-INTRO",
     "version": "2026.08",
     "text": "咳嗽與呼吸費力可能來自呼吸道，也可能和心臟或其他系統有關。持續或惡化的症狀需由獸醫檢查，不應自行使用人用止咳藥。",
-    "species_scope": ["dog"],
+    "species_scope": [
+      "dog"
+    ],
     "issue_date_iso": "2026-08-01",
     "expiry_date_iso": "2027-08-19",
     "review_status": "approved",
@@ -193,11 +266,16 @@
   },
   {
     "passage_id": "EDU-EMG-004",
-    "scenario_scope": ["跨情境"],
+    "scenario_scope": [
+      "跨情境"
+    ],
     "doc_id": "MSD-PET-EMERGENCY",
     "version": "2025.12",
     "text": "中毒、呼吸困難、嚴重或持續出血、眼睛受傷、疑似骨折、嚴重疼痛或失去意識，都需要立即聯絡獸醫並安排急診評估。",
-    "species_scope": ["cat", "dog"],
+    "species_scope": [
+      "cat",
+      "dog"
+    ],
     "issue_date_iso": "2025-12-01",
     "expiry_date_iso": "2027-08-19",
     "review_status": "approved",
@@ -205,11 +283,16 @@
   },
   {
     "passage_id": "EDU-EMG-005",
-    "scenario_scope": ["跨情境"],
+    "scenario_scope": [
+      "跨情境"
+    ],
     "doc_id": "MSD-PET-EMERGENCY",
     "version": "2025.12",
     "text": "前往急診前先電話告知院所發生經過、意識與呼吸狀況；若疑似中毒或誤食，攜帶產品包裝、成分標示或殘留物。",
-    "species_scope": ["cat", "dog"],
+    "species_scope": [
+      "cat",
+      "dog"
+    ],
     "issue_date_iso": "2025-12-01",
     "expiry_date_iso": "2027-08-19",
     "review_status": "approved",
@@ -217,11 +300,16 @@
   },
   {
     "passage_id": "EDU-EMG-006",
-    "scenario_scope": ["跨情境"],
+    "scenario_scope": [
+      "跨情境"
+    ],
     "doc_id": "MSD-SMALL-ANIMAL-TRANSPORT",
     "version": "2025.12",
     "text": "受傷、疼痛或呼吸困難的動物可能因恐懼而咬抓。協助與運送時應先確保人員安全，避免壓迫胸腹，並依獸醫電話指示處理。",
-    "species_scope": ["cat", "dog"],
+    "species_scope": [
+      "cat",
+      "dog"
+    ],
     "issue_date_iso": "2025-12-01",
     "expiry_date_iso": "2027-08-19",
     "review_status": "approved",
@@ -229,11 +317,16 @@
   },
   {
     "passage_id": "EDU-POL-003",
-    "scenario_scope": ["跨情境"],
+    "scenario_scope": [
+      "跨情境"
+    ],
     "doc_id": "MSD-EMERGENCY-EVALUATION",
     "version": "2025.12",
     "text": "急診評估會先處理最危及生命的問題，再依病史、理學檢查與必要檢驗確認原因；線上衛教只能協助辨識風險與整理資訊，不能取代檢查。",
-    "species_scope": ["cat", "dog"],
+    "species_scope": [
+      "cat",
+      "dog"
+    ],
     "issue_date_iso": "2025-12-01",
     "expiry_date_iso": "2027-08-19",
     "review_status": "approved",
@@ -241,11 +334,15 @@
   },
   {
     "passage_id": "EDU-URI-007",
-    "scenario_scope": ["泌尿"],
+    "scenario_scope": [
+      "泌尿"
+    ],
     "doc_id": "CORNELL-FLUTD",
     "version": "online-2026.08.20",
     "text": "貓下泌尿道症狀包括排尿困難或疼痛、頻尿、排尿時叫喊、血尿、在砂盆外排尿與頻繁舔生殖區。這些表現可能有多種原因，需要獸醫檢查與尿液分析。",
-    "species_scope": ["cat"],
+    "species_scope": [
+      "cat"
+    ],
     "expiry_date_iso": "2027-08-19",
     "review_status": "approved",
     "source_title": "Feline Lower Urinary Tract Disease",
@@ -255,11 +352,15 @@
   },
   {
     "passage_id": "EDU-URI-008",
-    "scenario_scope": ["泌尿"],
+    "scenario_scope": [
+      "泌尿"
+    ],
     "doc_id": "CORNELL-FLUTD",
     "version": "online-2026.08.20",
     "text": "貓若反覆嘗試排尿卻只能排出極少量或完全無尿，並且越來越焦躁，可能是尿道阻塞；這是需要立即接受獸醫治療的絕對急症。",
-    "species_scope": ["cat"],
+    "species_scope": [
+      "cat"
+    ],
     "expiry_date_iso": "2027-08-19",
     "review_status": "approved",
     "source_title": "Feline Lower Urinary Tract Disease",
@@ -269,11 +370,15 @@
   },
   {
     "passage_id": "EDU-GI-007",
-    "scenario_scope": ["腸胃"],
+    "scenario_scope": [
+      "腸胃"
+    ],
     "doc_id": "CORNELL-FELINE-GI-PARASITES",
     "version": "online-2026.08.20",
     "text": "貓的腸胃寄生蟲可能造成嘔吐、腹瀉、黏液或血便、食慾下降、黏膜蒼白或腹部膨大；症狀通常不具特異性，需要糞便與臨床檢查確認。",
-    "species_scope": ["cat"],
+    "species_scope": [
+      "cat"
+    ],
     "expiry_date_iso": "2027-08-19",
     "review_status": "approved",
     "source_title": "Gastrointestinal Parasites of Cats",
@@ -283,11 +388,16 @@
   },
   {
     "passage_id": "EDU-GI-008",
-    "scenario_scope": ["腸胃", "跨情境"],
+    "scenario_scope": [
+      "腸胃",
+      "跨情境"
+    ],
     "doc_id": "CORNELL-FELINE-GI-PARASITES",
     "version": "online-2026.08.20",
     "text": "部分貓腸胃寄生蟲可能感染人。處理糞便與砂盆後應洗手，幼貓、持續腹瀉或疑似寄生蟲時應請獸醫安排適當檢查與治療。",
-    "species_scope": ["cat"],
+    "species_scope": [
+      "cat"
+    ],
     "expiry_date_iso": "2027-08-19",
     "review_status": "approved",
     "source_title": "Gastrointestinal Parasites of Cats",
@@ -297,11 +407,15 @@
   },
   {
     "passage_id": "EDU-DERM-007",
-    "scenario_scope": ["皮膚耳部"],
+    "scenario_scope": [
+      "皮膚耳部"
+    ],
     "doc_id": "CORNELL-FELINE-SKIN",
     "version": "2023",
     "text": "貓皮膚問題常見表現包括過度抓、舔或咬毛，皮膚紅腫、掉毛、結痂脫屑，以及腫塊。寄生蟲、過敏、感染與其他原因都可能造成相似症狀。",
-    "species_scope": ["cat"],
+    "species_scope": [
+      "cat"
+    ],
     "issue_date_iso": "2023-01-01",
     "expiry_date_iso": "2027-08-19",
     "review_status": "approved",
@@ -312,11 +426,15 @@
   },
   {
     "passage_id": "EDU-DERM-008",
-    "scenario_scope": ["皮膚耳部"],
+    "scenario_scope": [
+      "皮膚耳部"
+    ],
     "doc_id": "CORNELL-FELINE-SKIN",
     "version": "2023",
     "text": "皮膚病的原因通常需要結合病史、皮膚分布、理學檢查與必要檢驗判斷；治療取決於原因，不應只依外觀自行使用抗生素、類固醇或除蟲產品。",
-    "species_scope": ["cat"],
+    "species_scope": [
+      "cat"
+    ],
     "issue_date_iso": "2023-01-01",
     "expiry_date_iso": "2027-08-19",
     "review_status": "approved",
@@ -327,11 +445,15 @@
   },
   {
     "passage_id": "EDU-RES-007",
-    "scenario_scope": ["呼吸"],
+    "scenario_scope": [
+      "呼吸"
+    ],
     "doc_id": "CORNELL-FELINE-DYSPNEA",
     "version": "online-2026.08.20",
     "text": "貓呼吸困難只是一項臨床表現，可能來自氣喘、心臟衰竭、胸腔積液、感染、外傷或異物等多種原因，不能只靠症狀自行判定病因。",
-    "species_scope": ["cat"],
+    "species_scope": [
+      "cat"
+    ],
     "expiry_date_iso": "2027-08-19",
     "review_status": "approved",
     "source_title": "Dyspnea (Difficulty Breathing)",
@@ -341,11 +463,16 @@
   },
   {
     "passage_id": "EDU-RES-008",
-    "scenario_scope": ["呼吸", "跨情境"],
+    "scenario_scope": [
+      "呼吸",
+      "跨情境"
+    ],
     "doc_id": "CORNELL-FELINE-LUNG",
     "version": "online-2026.08.20",
     "text": "貓出現費力呼吸、昏厥、嘴唇或牙齦蒼白或發紫時，需要立即處理。嚴重呼吸窘迫的貓應減少壓力，先穩定呼吸再進行完整檢查。",
-    "species_scope": ["cat"],
+    "species_scope": [
+      "cat"
+    ],
     "expiry_date_iso": "2027-08-19",
     "review_status": "approved",
     "source_title": "Lung Ailments: A Widespread Source of Feline Woe",
@@ -355,11 +482,17 @@
   },
   {
     "passage_id": "EDU-TOX-003",
-    "scenario_scope": ["腸胃", "跨情境"],
+    "scenario_scope": [
+      "腸胃",
+      "跨情境"
+    ],
     "doc_id": "FDA-PET-DANGEROUS-ITEMS",
     "version": "online-2026.08.20",
     "text": "巧克力、葡萄與葡萄乾、洋蔥與大蒜、木糖醇、咖啡因、人用藥物及部分植物可能危害寵物；毒性會受物種、攝入量與接觸部位影響。",
-    "species_scope": ["cat", "dog"],
+    "species_scope": [
+      "cat",
+      "dog"
+    ],
     "expiry_date_iso": "2027-08-19",
     "review_status": "approved",
     "source_title": "Potentially Dangerous Items for Your Pet",
@@ -369,11 +502,16 @@
   },
   {
     "passage_id": "EDU-TOX-004",
-    "scenario_scope": ["跨情境"],
+    "scenario_scope": [
+      "跨情境"
+    ],
     "doc_id": "FDA-PET-DANGEROUS-ITEMS",
     "version": "online-2026.08.20",
     "text": "若懷疑寵物吃到危險物品，應立即聯絡獸醫或動物毒物諮詢中心；不要等待症狀出現，也不要在未獲專業指示前自行催吐。",
-    "species_scope": ["cat", "dog"],
+    "species_scope": [
+      "cat",
+      "dog"
+    ],
     "expiry_date_iso": "2027-08-19",
     "review_status": "approved",
     "source_title": "Potentially Dangerous Items for Your Pet",
@@ -383,11 +521,16 @@
   },
   {
     "passage_id": "EDU-TOX-005",
-    "scenario_scope": ["跨情境"],
+    "scenario_scope": [
+      "跨情境"
+    ],
     "doc_id": "FDA-PET-MEDICATION-SAFETY",
     "version": "online-2026.08.20",
     "text": "寵物藥與人用藥應保留原容器與清楚標籤，存放在寵物無法接觸的位置。若誤食、給錯藥或給藥過量，應立即聯絡獸醫或動物毒物諮詢中心。",
-    "species_scope": ["cat", "dog"],
+    "species_scope": [
+      "cat",
+      "dog"
+    ],
     "expiry_date_iso": "2027-08-19",
     "review_status": "approved",
     "source_title": "Properly Store Medications to Keep Your Pet Safe",
@@ -397,16 +540,725 @@
   },
   {
     "passage_id": "EDU-TOX-006",
-    "scenario_scope": ["跨情境"],
+    "scenario_scope": [
+      "跨情境"
+    ],
     "doc_id": "FDA-PET-PAIN-RELIEVERS",
     "version": "online-2026.08.20",
     "text": "不要自行把人用止痛藥給犬貓。乙醯胺酚可能造成肝臟與紅血球傷害，對貓尤其危險；人用 NSAIDs 也可能造成嚴重副作用。",
-    "species_scope": ["cat", "dog"],
+    "species_scope": [
+      "cat",
+      "dog"
+    ],
     "expiry_date_iso": "2027-08-19",
     "review_status": "approved",
     "source_title": "Get the Facts about Pain Relievers for Pets",
     "source_org": "U.S. Food and Drug Administration",
     "source_url": "https://www.fda.gov/animal-veterinary/animal-health-literacy/get-facts-about-pain-relievers-pets",
     "fetched_at": "2026-08-20T00:00:00+08:00"
+  },
+  {
+    "passage_id": "EDU-DERM-009",
+    "scenario_scope": [
+      "皮膚耳部"
+    ],
+    "doc_id": "MSD-OTITIS-EXTERNA",
+    "version": "2026.04",
+    "text": "外耳炎的處理重點是找出「原發原因」。過敏（食物或環境）、耳疥蟲等寄生蟲、耳道異物、內分泌疾病與角化異常，都可能讓原本正常的耳道發炎；若只處理表面的細菌或酵母菌感染而未解決原發原因，外耳炎通常會反覆發作。",
+    "species_scope": [
+      "dog",
+      "cat"
+    ],
+    "issue_date_iso": "2026-04-01",
+    "expiry_date_iso": "2027-08-19",
+    "review_status": "approved",
+    "source_url": "https://www.msdvetmanual.com/ear-disorders/otitis-externa/otitis-externa-in-animals"
+  },
+  {
+    "passage_id": "EDU-DERM-010",
+    "scenario_scope": [
+      "皮膚耳部"
+    ],
+    "doc_id": "MSD-OTITIS-EXTERNA",
+    "version": "2026.04",
+    "text": "外耳炎在犬貓都常見，其中又以犬隻最常因此就診。典型表現是甩頭、抓耳、耳道疼痛、異味、發紅、糜爛或潰瘍與腫脹，可能單耳或雙耳、急性或慢性。",
+    "species_scope": [
+      "dog",
+      "cat"
+    ],
+    "issue_date_iso": "2026-04-01",
+    "expiry_date_iso": "2027-08-19",
+    "review_status": "approved",
+    "source_url": "https://www.msdvetmanual.com/ear-disorders/otitis-externa/otitis-externa-in-animals"
+  },
+  {
+    "passage_id": "EDU-DERM-011",
+    "scenario_scope": [
+      "皮膚耳部"
+    ],
+    "doc_id": "MSD-OTITIS-EXTERNA",
+    "version": "2026.04",
+    "text": "外耳炎的診斷需要結合病史、耳鏡檢查與耳道分泌物細胞學判讀。細胞學可分辨感染是細菌或酵母菌為主，是選擇治療方式的依據，因此不建議僅憑耳朵外觀或氣味自行判斷用藥。",
+    "species_scope": [
+      "dog",
+      "cat"
+    ],
+    "issue_date_iso": "2026-04-01",
+    "expiry_date_iso": "2027-08-19",
+    "review_status": "approved",
+    "source_url": "https://www.msdvetmanual.com/ear-disorders/otitis-externa/otitis-externa-in-animals"
+  },
+  {
+    "passage_id": "EDU-DERM-012",
+    "scenario_scope": [
+      "皮膚耳部"
+    ],
+    "doc_id": "MSD-OTITIS-EXTERNA",
+    "version": "2026.04",
+    "text": "耳道若已有耳膜破損或懷疑中耳受影響，部分清耳液與外用藥可能造成傷害，用藥前需由獸醫確認耳膜完整性。自行灌洗或延用先前剩餘的耳藥，可能使問題惡化。",
+    "species_scope": [
+      "dog",
+      "cat"
+    ],
+    "issue_date_iso": "2026-04-01",
+    "expiry_date_iso": "2027-08-19",
+    "review_status": "approved",
+    "source_url": "https://www.msdvetmanual.com/ear-disorders/otitis-externa/otitis-externa-in-animals"
+  },
+  {
+    "passage_id": "EDU-DERM-013",
+    "scenario_scope": [
+      "皮膚耳部"
+    ],
+    "doc_id": "MSD-CAT-ANAPHYLAXIS",
+    "version": "2026.08",
+    "text": "蕁麻疹與局部腫脹多在接觸過敏原後約 20 分鐘內出現，可能來自藥物、疫苗、化學物質、食物或昆蟲叮咬，皮膚會出現小丘疹、腫塊處毛髮豎起並可能發癢。",
+    "species_scope": [
+      "cat"
+    ],
+    "issue_date_iso": "2026-08-01",
+    "expiry_date_iso": "2027-08-19",
+    "review_status": "approved",
+    "source_url": "https://www.msdvetmanual.com/cat-owners/immune-disorders-of-cats/disorders-involving-anaphylactic-reactions-type-i-reactions-atopy-in-cats"
+  },
+  {
+    "passage_id": "EDU-DERM-014",
+    "scenario_scope": [
+      "皮膚耳部"
+    ],
+    "doc_id": "MSD-CAT-ANAPHYLAXIS",
+    "version": "2026.08",
+    "text": "臉部腫脹要特別當心，尤其是嘴唇、鼻部與眼睛周圍；腫脹可能嚴重到貓無法睜開眼睛。單純蕁麻疹通常不危及生命，但臉部腫脹合併其他全身症狀時風險升高，應儘快就醫評估。",
+    "species_scope": [
+      "cat"
+    ],
+    "issue_date_iso": "2026-08-01",
+    "expiry_date_iso": "2027-08-19",
+    "review_status": "approved",
+    "source_url": "https://www.msdvetmanual.com/cat-owners/immune-disorders-of-cats/disorders-involving-anaphylactic-reactions-type-i-reactions-atopy-in-cats"
+  },
+  {
+    "passage_id": "EDU-DERM-015",
+    "scenario_scope": [
+      "皮膚耳部"
+    ],
+    "doc_id": "MSD-CAT-ANAPHYLAXIS",
+    "version": "2026.08",
+    "text": "貓的異位性皮膚炎（atopy）是皮膚對環境過敏原過度反應，常見反覆搔抓、身上出現小結痂或局部較大結痂，也可能出現塊狀脫毛。在貓，食物過敏可能比環境過敏更常造成皮膚問題。",
+    "species_scope": [
+      "cat"
+    ],
+    "issue_date_iso": "2026-08-01",
+    "expiry_date_iso": "2027-08-19",
+    "review_status": "approved",
+    "source_url": "https://www.msdvetmanual.com/cat-owners/immune-disorders-of-cats/disorders-involving-anaphylactic-reactions-type-i-reactions-atopy-in-cats"
+  },
+  {
+    "passage_id": "EDU-DERM-016",
+    "scenario_scope": [
+      "皮膚耳部"
+    ],
+    "doc_id": "MSD-TOPICAL-TREATMENT",
+    "version": "2026.08",
+    "text": "使用外用藥時，動物舔舐塗抹部位可能造成藥物被吞入或降低療效。塗抹後應依獸醫指示避免舔舐，並注意多寵物家庭中其他動物互相舔舐的風險。",
+    "species_scope": [
+      "dog",
+      "cat"
+    ],
+    "issue_date_iso": "2026-08-01",
+    "expiry_date_iso": "2027-08-19",
+    "review_status": "approved",
+    "source_url": "https://www.msdvetmanual.com/integumentary-system/integumentary-system-introduction/principles-of-topical-treatment-in-animals"
+  },
+  {
+    "passage_id": "EDU-DERM-017",
+    "scenario_scope": [
+      "皮膚耳部"
+    ],
+    "doc_id": "CORNELL-FELINE-SKIN",
+    "version": "2023",
+    "text": "貓過度理毛有時是皮膚不適的唯一表現，飼主未必看得到搔抓動作，卻會發現對稱性脫毛、毛髮斷裂或毛球增加。持續過度舔毛應視為需要就醫評估的皮膚訊號。",
+    "species_scope": [
+      "cat"
+    ],
+    "issue_date_iso": "2023-01-01",
+    "expiry_date_iso": "2027-08-19",
+    "review_status": "approved",
+    "source_url": "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center/health-information/feline-health-topics/feline-skin-diseases"
+  },
+  {
+    "passage_id": "EDU-DERM-018",
+    "scenario_scope": [
+      "皮膚耳部"
+    ],
+    "doc_id": "MSD-ALLERGIC-EAR-DISEASE",
+    "version": "2026.06",
+    "text": "耳廓的過敏性皮膚問題常與全身性過敏並存，可能同時看到臉部、腳掌或腹部搔癢。若只治療耳朵而忽略全身皮膚狀況，容易誤判嚴重度與治療反應。",
+    "species_scope": [
+      "dog",
+      "cat"
+    ],
+    "issue_date_iso": "2026-06-01",
+    "expiry_date_iso": "2027-08-19",
+    "review_status": "approved",
+    "source_url": "https://www.msdvetmanual.com/ear-disorders/diseases-of-the-pinna/allergic-skin-disease-affecting-the-pinna-in-dogs-and-cats"
+  },
+  {
+    "passage_id": "EDU-URI-009",
+    "scenario_scope": [
+      "泌尿"
+    ],
+    "doc_id": "MSD-OBSTRUCTIVE-UROPATHY",
+    "version": "2025.06",
+    "text": "尿路阻塞在犬與貓都可能發生：公貓常見尿道被結晶與黏液形成的栓子堵住，犬隻則較常因尿結石阻塞。腫瘤、尿道狹窄或骨盆腔病灶壓迫也可能造成阻塞。",
+    "species_scope": [
+      "dog",
+      "cat"
+    ],
+    "issue_date_iso": "2025-06-01",
+    "expiry_date_iso": "2027-08-19",
+    "review_status": "approved",
+    "source_url": "https://www.msdvetmanual.com/urinary-system/noninfectious-diseases-of-the-urinary-system-in-small-animals/obstructive-uropathy-in-dogs-and-cats"
+  },
+  {
+    "passage_id": "EDU-URI-010",
+    "scenario_scope": [
+      "泌尿"
+    ],
+    "doc_id": "MSD-OBSTRUCTIVE-UROPATHY",
+    "version": "2025.06",
+    "text": "尿路阻塞的動物常出現頻尿、用力排尿與血尿，飼主有時會誤以為是便秘在用力。若發現寵物一再擺出排尿姿勢卻幾乎排不出尿，應立即就醫而非等待觀察。",
+    "species_scope": [
+      "dog",
+      "cat"
+    ],
+    "issue_date_iso": "2025-06-01",
+    "expiry_date_iso": "2027-08-19",
+    "review_status": "approved",
+    "source_url": "https://www.msdvetmanual.com/urinary-system/noninfectious-diseases-of-the-urinary-system-in-small-animals/obstructive-uropathy-in-dogs-and-cats"
+  },
+  {
+    "passage_id": "EDU-URI-011",
+    "scenario_scope": [
+      "泌尿"
+    ],
+    "doc_id": "MSD-OBSTRUCTIVE-UROPATHY",
+    "version": "2025.06",
+    "text": "完全性尿道阻塞會迅速出現尿毒症狀，包括嘔吐、脫水、體溫偏低與精神嚴重變差，血鉀升高還可能造成心跳過慢或心律不整。這是需要急診處置的狀況。",
+    "species_scope": [
+      "dog",
+      "cat"
+    ],
+    "issue_date_iso": "2025-06-01",
+    "expiry_date_iso": "2027-08-19",
+    "review_status": "approved",
+    "source_url": "https://www.msdvetmanual.com/urinary-system/noninfectious-diseases-of-the-urinary-system-in-small-animals/obstructive-uropathy-in-dogs-and-cats"
+  },
+  {
+    "passage_id": "EDU-URI-012",
+    "scenario_scope": [
+      "泌尿"
+    ],
+    "doc_id": "MSD-OBSTRUCTIVE-UROPATHY",
+    "version": "2025.06",
+    "text": "尿路阻塞的治療會先穩定危及生命的電解質與體液異常，再設法解除阻塞。因此就醫時獸醫通常會先抽血評估腎指數與血鉀，而非立即進行影像或手術。",
+    "species_scope": [
+      "dog",
+      "cat"
+    ],
+    "issue_date_iso": "2025-06-01",
+    "expiry_date_iso": "2027-08-19",
+    "review_status": "approved",
+    "source_url": "https://www.msdvetmanual.com/urinary-system/noninfectious-diseases-of-the-urinary-system-in-small-animals/obstructive-uropathy-in-dogs-and-cats"
+  },
+  {
+    "passage_id": "EDU-URI-013",
+    "scenario_scope": [
+      "泌尿"
+    ],
+    "doc_id": "CORNELL-FLUTD",
+    "version": "online-2026.08.20",
+    "text": "貓下泌尿道疾病的常見表現包括排尿困難或疼痛、排尿次數增加、排尿時嚎叫、血尿、在砂盆外排尿，以及頻繁舔舐生殖器部位。",
+    "species_scope": [
+      "cat"
+    ],
+    "issue_date_iso": "2026-08-01",
+    "expiry_date_iso": "2027-08-19",
+    "review_status": "approved",
+    "source_url": "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center/health-information/feline-health-topics/feline-lower-urinary-tract-disease"
+  },
+  {
+    "passage_id": "EDU-URI-014",
+    "scenario_scope": [
+      "泌尿"
+    ],
+    "doc_id": "CORNELL-FLUTD",
+    "version": "online-2026.08.20",
+    "text": "貓特發性膀胱炎是下泌尿道症狀中最常見的診斷，壓力被認為是重要誘因。環境變動、餵食時間改變或家中動物數量改變都可能誘發，透過環境豐富化與減壓有助降低復發頻率與嚴重度。",
+    "species_scope": [
+      "cat"
+    ],
+    "issue_date_iso": "2026-08-01",
+    "expiry_date_iso": "2027-08-19",
+    "review_status": "approved",
+    "source_url": "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center/health-information/feline-health-topics/feline-lower-urinary-tract-disease"
+  },
+  {
+    "passage_id": "EDU-URI-015",
+    "scenario_scope": [
+      "泌尿"
+    ],
+    "doc_id": "CORNELL-FLUTD",
+    "version": "online-2026.08.20",
+    "text": "下泌尿道症狀較常見於中年、體重過重、活動量少、使用室內砂盆且飲水偏少的貓；公貓風險可能較高。多貓家庭與生活作息改變也是風險因子。",
+    "species_scope": [
+      "cat"
+    ],
+    "issue_date_iso": "2026-08-01",
+    "expiry_date_iso": "2027-08-19",
+    "review_status": "approved",
+    "source_url": "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center/health-information/feline-health-topics/feline-lower-urinary-tract-disease"
+  },
+  {
+    "passage_id": "EDU-URI-016",
+    "scenario_scope": [
+      "泌尿"
+    ],
+    "doc_id": "MSD-CAT-URINARY-NONINFECTIOUS",
+    "version": "2026.05",
+    "text": "貓的泌尿道結石成分不同，處理方式也不同：部分結石可透過處方飲食溶解，另一些則需手術或其他方式移除，因此需要尿液檢查與影像來判斷，不建議自行購買保健品處理。",
+    "species_scope": [
+      "cat"
+    ],
+    "issue_date_iso": "2026-05-01",
+    "expiry_date_iso": "2027-08-19",
+    "review_status": "approved",
+    "source_url": "https://www.msdvetmanual.com/cat-owners/kidney-and-urinary-tract-disorders-of-cats/noninfectious-diseases-of-the-urinary-system-of-cats"
+  },
+  {
+    "passage_id": "EDU-GI-009",
+    "scenario_scope": [
+      "腸胃"
+    ],
+    "doc_id": "MSD-DOG-STOMACH-INTESTINES",
+    "version": "2026.06",
+    "text": "胃扭轉（俗稱脹氣、GDV）是危及生命的急症，胃沿軸向扭轉並積聚氣體與液體。典型表現是躁動不安、明顯不適、呼吸急促、腹部疼痛與腫脹、反覆乾嘔卻吐不出東西，以及大量流口水。",
+    "species_scope": [
+      "dog"
+    ],
+    "issue_date_iso": "2026-06-01",
+    "expiry_date_iso": "2027-08-19",
+    "review_status": "approved",
+    "source_url": "https://www.msdvetmanual.com/dog-owners/digestive-disorders-of-dogs/disorders-of-the-stomach-and-intestines-in-dogs"
+  },
+  {
+    "passage_id": "EDU-GI-010",
+    "scenario_scope": [
+      "腸胃"
+    ],
+    "doc_id": "MSD-DOG-STOMACH-INTESTINES",
+    "version": "2026.06",
+    "text": "胃扭轉好發於大型與胸腔深的犬種，杜賓、德國牧羊犬、大丹、聖伯納等品種較常見，風險隨年齡增加。若近親曾發生胃扭轉，該犬風險也較高。發現疑似徵兆應立即送醫，及時就診可提高存活機會。",
+    "species_scope": [
+      "dog"
+    ],
+    "issue_date_iso": "2026-06-01",
+    "expiry_date_iso": "2027-08-19",
+    "review_status": "approved",
+    "source_url": "https://www.msdvetmanual.com/dog-owners/digestive-disorders-of-dogs/disorders-of-the-stomach-and-intestines-in-dogs"
+  },
+  {
+    "passage_id": "EDU-GI-011",
+    "scenario_scope": [
+      "腸胃"
+    ],
+    "doc_id": "MSD-DOG-STOMACH-INTESTINES",
+    "version": "2026.06",
+    "text": "對容易胃扭轉的犬隻，獸醫可能建議少量多餐取代一日一大餐、避免餐後劇烈運動，並避免運動後一次大量飲水，以減少胃部過度擴張。",
+    "species_scope": [
+      "dog"
+    ],
+    "issue_date_iso": "2026-06-01",
+    "expiry_date_iso": "2027-08-19",
+    "review_status": "approved",
+    "source_url": "https://www.msdvetmanual.com/dog-owners/digestive-disorders-of-dogs/disorders-of-the-stomach-and-intestines-in-dogs"
+  },
+  {
+    "passage_id": "EDU-GI-012",
+    "scenario_scope": [
+      "腸胃"
+    ],
+    "doc_id": "MSD-DOG-STOMACH-INTESTINES",
+    "version": "2026.06",
+    "text": "犬小病毒腸炎初期症狀可能不具特異性，如精神差、食慾不振與發燒，並在一到兩天內進展為嘔吐與血便。腹部疼痛可能代表腸道阻塞，需要緊急處理；嚴重病例可能在症狀出現後數小時內死亡。",
+    "species_scope": [
+      "dog"
+    ],
+    "issue_date_iso": "2026-06-01",
+    "expiry_date_iso": "2027-08-19",
+    "review_status": "approved",
+    "source_url": "https://www.msdvetmanual.com/dog-owners/digestive-disorders-of-dogs/disorders-of-the-stomach-and-intestines-in-dogs"
+  },
+  {
+    "passage_id": "EDU-GI-013",
+    "scenario_scope": [
+      "腸胃"
+    ],
+    "doc_id": "MSD-DOG-STOMACH-INTESTINES",
+    "version": "2026.06",
+    "text": "犬隻腸道異物阻塞常見精神變差、食慾不振與嘔吐，也可能出現腹瀉、體重下降、腹痛、腹脹、脫水與休克。若持續嘔吐無法停止，體液流失可能在短時間內危及生命。",
+    "species_scope": [
+      "dog"
+    ],
+    "issue_date_iso": "2026-06-01",
+    "expiry_date_iso": "2027-08-19",
+    "review_status": "approved",
+    "source_url": "https://www.msdvetmanual.com/dog-owners/digestive-disorders-of-dogs/disorders-of-the-stomach-and-intestines-in-dogs"
+  },
+  {
+    "passage_id": "EDU-GI-014",
+    "scenario_scope": [
+      "腸胃"
+    ],
+    "doc_id": "MSD-DOG-STOMACH-INTESTINES",
+    "version": "2026.06",
+    "text": "出血性腸胃炎的特徵是原本健康的犬隻突然出現嘔吐與血便，並伴隨食慾不振、腹痛與精神低落。嚴重的嘔吐與腹瀉可能因脫水導致休克，屬於需要儘速就醫的狀況。",
+    "species_scope": [
+      "dog"
+    ],
+    "issue_date_iso": "2026-06-01",
+    "expiry_date_iso": "2027-08-19",
+    "review_status": "approved",
+    "source_url": "https://www.msdvetmanual.com/dog-owners/digestive-disorders-of-dogs/disorders-of-the-stomach-and-intestines-in-dogs"
+  },
+  {
+    "passage_id": "EDU-GI-015",
+    "scenario_scope": [
+      "腸胃"
+    ],
+    "doc_id": "MSD-DOG-STOMACH-INTESTINES",
+    "version": "2026.06",
+    "text": "大腸發炎（結腸炎）的犬隻常出現排便用力、糞便量少而稀、次數增加並帶有黏液，有時含血，也可能因急迫感而在室內失禁。與小腸疾病相比，體重下降與嘔吐較少見。",
+    "species_scope": [
+      "dog"
+    ],
+    "issue_date_iso": "2026-06-01",
+    "expiry_date_iso": "2027-08-19",
+    "review_status": "approved",
+    "source_url": "https://www.msdvetmanual.com/dog-owners/digestive-disorders-of-dogs/disorders-of-the-stomach-and-intestines-in-dogs"
+  },
+  {
+    "passage_id": "EDU-GI-016",
+    "scenario_scope": [
+      "腸胃"
+    ],
+    "doc_id": "MSD-DOG-DIGESTIVE-INTRO",
+    "version": "2026.06",
+    "text": "消化道疾病的表現包括流口水過多、腹瀉、便秘、嘔吐或食道逆流、食慾不振、出血、腹痛與腹脹、排便困難、休克與脫水。要注意嘔吐也可能來自消化道以外的問題，例如腎臟疾病。",
+    "species_scope": [
+      "dog"
+    ],
+    "issue_date_iso": "2026-06-01",
+    "expiry_date_iso": "2027-08-19",
+    "review_status": "approved",
+    "source_url": "https://www.msdvetmanual.com/dog-owners/digestive-disorders-of-dogs/introduction-to-digestive-disorders-of-dogs"
+  },
+  {
+    "passage_id": "EDU-GI-017",
+    "scenario_scope": [
+      "腸胃"
+    ],
+    "doc_id": "MSD-CAT-VOMITING",
+    "version": "2024.09",
+    "text": "貓嘔吐時，嘔吐物的內容與時間點有助判斷原因：進食後短時間內嘔吐、嘔吐物含血或看起來像咖啡渣、以及合併腹瀉或體重減輕，都是需要告知獸醫的重要資訊。",
+    "species_scope": [
+      "cat"
+    ],
+    "issue_date_iso": "2024-09-01",
+    "expiry_date_iso": "2027-08-19",
+    "review_status": "approved",
+    "source_url": "https://www.msdvetmanual.com/cat-owners/digestive-disorders-of-cats/vomiting-in-cats"
+  },
+  {
+    "passage_id": "EDU-GI-018",
+    "scenario_scope": [
+      "腸胃"
+    ],
+    "doc_id": "CORNELL-FELINE-GI-PARASITES",
+    "version": "online-2026.08.20",
+    "text": "腸道寄生蟲可能造成貓腹瀉、嘔吐、體重下降與被毛狀況變差，幼貓感染時影響更明顯。部分寄生蟲具人畜共通風險，確診需要糞便檢查，驅蟲藥物應依檢查結果與獸醫指示選用。",
+    "species_scope": [
+      "cat"
+    ],
+    "issue_date_iso": "2026-08-01",
+    "expiry_date_iso": "2027-08-19",
+    "review_status": "approved",
+    "source_url": "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center/health-information/feline-health-topics/gastrointestinal-parasites-cats"
+  },
+  {
+    "passage_id": "EDU-RES-009",
+    "scenario_scope": [
+      "呼吸"
+    ],
+    "doc_id": "MSD-DOG-RESPIRATORY-INTRO",
+    "version": "2026.08",
+    "text": "犬隻呼吸道疾病相當常見。咳嗽與呼吸費力雖然最常來自呼吸道問題，但也可能是其他器官系統的疾病造成，例如充血性心衰竭，因此不能只以咳嗽判斷病因。",
+    "species_scope": [
+      "dog"
+    ],
+    "issue_date_iso": "2026-08-01",
+    "expiry_date_iso": "2027-08-19",
+    "review_status": "approved",
+    "source_url": "https://www.msdvetmanual.com/dog-owners/lung-and-airway-disorders-of-dogs/introduction-to-lung-and-airway-disorders-of-dogs"
+  },
+  {
+    "passage_id": "EDU-RES-010",
+    "scenario_scope": [
+      "呼吸"
+    ],
+    "doc_id": "MSD-DOG-RESPIRATORY-INTRO",
+    "version": "2026.08",
+    "text": "幼犬與老年犬罹患呼吸道疾病的風險高於健康成犬：幼犬呼吸與免疫系統尚未發育完全，老年犬則因過濾顆粒與抗感染能力下降，肺部更容易受到病原與有害顆粒影響。",
+    "species_scope": [
+      "dog"
+    ],
+    "issue_date_iso": "2026-08-01",
+    "expiry_date_iso": "2027-08-19",
+    "review_status": "approved",
+    "source_url": "https://www.msdvetmanual.com/dog-owners/lung-and-airway-disorders-of-dogs/introduction-to-lung-and-airway-disorders-of-dogs"
+  },
+  {
+    "passage_id": "EDU-RES-011",
+    "scenario_scope": [
+      "呼吸"
+    ],
+    "doc_id": "MSD-DOG-RESPIRATORY-INTRO",
+    "version": "2026.08",
+    "text": "先天結構異常也可能造成犬隻呼吸困難，包括鼻孔狹窄、軟顎過長、顎裂與氣管狹窄；氣管塌陷與呼吸道腫瘤同樣會造成呼吸費力等症狀。",
+    "species_scope": [
+      "dog"
+    ],
+    "issue_date_iso": "2026-08-01",
+    "expiry_date_iso": "2027-08-19",
+    "review_status": "approved",
+    "source_url": "https://www.msdvetmanual.com/dog-owners/lung-and-airway-disorders-of-dogs/introduction-to-lung-and-airway-disorders-of-dogs"
+  },
+  {
+    "passage_id": "EDU-RES-012",
+    "scenario_scope": [
+      "呼吸"
+    ],
+    "doc_id": "MSD-DOG-RESPIRATORY-INTRO",
+    "version": "2026.08",
+    "text": "犬隻出現咳嗽、淺快呼吸或呼吸費力等下呼吸道症狀時，通常需要胸部 X 光檢查。血氧或血液氣體分析可評估是否需要氧氣治療，這些都無法以外觀自行判斷。",
+    "species_scope": [
+      "dog"
+    ],
+    "issue_date_iso": "2026-08-01",
+    "expiry_date_iso": "2027-08-19",
+    "review_status": "approved",
+    "source_url": "https://www.msdvetmanual.com/dog-owners/lung-and-airway-disorders-of-dogs/introduction-to-lung-and-airway-disorders-of-dogs"
+  },
+  {
+    "passage_id": "EDU-RES-013",
+    "scenario_scope": [
+      "呼吸"
+    ],
+    "doc_id": "MSD-DOG-RESPIRATORY-INTRO",
+    "version": "2026.08",
+    "text": "群體飼養環境中，突然更換飲食、斷奶、寒冷、風吹、潮濕、灰塵、通風不良與不同年齡動物混養，都可能促成呼吸道疾病。疫苗可協助控制部分呼吸道感染，但不能取代良好的環境與照護。",
+    "species_scope": [
+      "dog"
+    ],
+    "issue_date_iso": "2026-08-01",
+    "expiry_date_iso": "2027-08-19",
+    "review_status": "approved",
+    "source_url": "https://www.msdvetmanual.com/dog-owners/lung-and-airway-disorders-of-dogs/introduction-to-lung-and-airway-disorders-of-dogs"
+  },
+  {
+    "passage_id": "EDU-RES-014",
+    "scenario_scope": [
+      "呼吸"
+    ],
+    "doc_id": "CORNELL-FELINE-DYSPNEA",
+    "version": "online-2026.08.20",
+    "text": "貓呼吸困難時可能出現張口呼吸、頸部前伸、腹部用力起伏，或不願趴下休息。貓在缺氧時傾向隱忍，症狀被發現時往往已相當嚴重，屬於需要立即就醫的情況。",
+    "species_scope": [
+      "cat"
+    ],
+    "issue_date_iso": "2026-08-01",
+    "expiry_date_iso": "2027-08-19",
+    "review_status": "approved",
+    "source_url": "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center/health-information/feline-health-topics/dyspnea-difficulty-breathing"
+  },
+  {
+    "passage_id": "EDU-RES-015",
+    "scenario_scope": [
+      "呼吸"
+    ],
+    "doc_id": "CORNELL-FELINE-LUNG",
+    "version": "online-2026.08.20",
+    "text": "貓氣喘與慢性支氣管疾病可能表現為咳嗽、喘鳴與呼吸費力，發作可能輕微間歇，也可能嚴重而持續。嚴重發作時會出現呼吸急促與費力吸氣，需要緊急處理。",
+    "species_scope": [
+      "cat"
+    ],
+    "issue_date_iso": "2026-08-01",
+    "expiry_date_iso": "2027-08-19",
+    "review_status": "approved",
+    "source_url": "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center/health-information/feline-health-topics/lung-ailments-widespread-source-feline-woe"
+  },
+  {
+    "passage_id": "EDU-RES-016",
+    "scenario_scope": [
+      "呼吸"
+    ],
+    "doc_id": "MSD-CAT-RESPIRATORY-INTRO",
+    "version": "2024.09",
+    "text": "呼吸系統疾病造成血氧不足時，動物會出現呼吸窘迫，身體會以加深加快呼吸、提高心跳與血流來代償。若代償失敗，各器官功能都會連帶受影響，因此呼吸困難不應在家觀察等待。",
+    "species_scope": [
+      "cat"
+    ],
+    "issue_date_iso": "2024-09-01",
+    "expiry_date_iso": "2027-08-19",
+    "review_status": "approved",
+    "source_url": "https://www.msdvetmanual.com/cat-owners/lung-and-airway-disorders-of-cats/introduction-to-lung-and-airway-disorders-of-cats"
+  },
+  {
+    "passage_id": "EDU-EMG-007",
+    "scenario_scope": [
+      "跨情境"
+    ],
+    "doc_id": "MSD-PET-EMERGENCY",
+    "version": "2025.12",
+    "text": "遇到緊急狀況時，先確保自身安全再接近動物：疼痛中的犬貓可能因恐懼而咬人。移動前先聯絡動物醫院說明狀況，讓院方能預先準備。",
+    "species_scope": [
+      "dog",
+      "cat"
+    ],
+    "issue_date_iso": "2025-12-01",
+    "expiry_date_iso": "2027-08-19",
+    "review_status": "approved",
+    "source_url": "https://www.msdvetmanual.com/special-pet-topics/emergencies/what-to-do-in-a-dog-or-cat-emergency"
+  },
+  {
+    "passage_id": "EDU-EMG-008",
+    "scenario_scope": [
+      "跨情境"
+    ],
+    "doc_id": "MSD-SMALL-ANIMAL-TRANSPORT",
+    "version": "2025.12",
+    "text": "運送受傷動物時應盡量減少晃動：可用硬板、厚毛巾或提籃固定身體，避免任意拉扯疑似骨折的肢體，並在運送過程中保持呼吸道暢通。",
+    "species_scope": [
+      "dog",
+      "cat"
+    ],
+    "issue_date_iso": "2025-12-01",
+    "expiry_date_iso": "2027-08-19",
+    "review_status": "approved",
+    "source_url": "https://www.msdvetmanual.com/emergency-medicine-and-critical-care/emergency-medicine-introduction/first-aid-and-transport-of-small-animals"
+  },
+  {
+    "passage_id": "EDU-EMG-009",
+    "scenario_scope": [
+      "跨情境"
+    ],
+    "doc_id": "MSD-EMERGENCY-EVALUATION",
+    "version": "2025.12",
+    "text": "急診評估會優先檢查呼吸道、呼吸與循環狀況。牙齦蒼白、四肢冰冷、脈搏微弱與意識改變都是休克的警訊，出現這些表現時需要立即處置而非在家觀察。",
+    "species_scope": [
+      "dog",
+      "cat"
+    ],
+    "issue_date_iso": "2025-12-01",
+    "expiry_date_iso": "2027-08-19",
+    "review_status": "approved",
+    "source_url": "https://www.msdvetmanual.com/special-pet-topics/emergencies/evaluation-and-initial-treatment-of-dog-and-cat-emergencies"
+  },
+  {
+    "passage_id": "EDU-EMG-010",
+    "scenario_scope": [
+      "跨情境"
+    ],
+    "doc_id": "MSD-CAT-ANAPHYLAXIS",
+    "version": "2026.08",
+    "text": "過敏性休克是罕見但危及生命的立即型過敏反應，常在接觸食物、注射或昆蟲叮咬後數秒至數分鐘內發作，可能出現嚴重呼吸窘迫、突發腹瀉與嘔吐、大量流口水、步態不穩、抽搐甚至昏迷。",
+    "species_scope": [
+      "cat"
+    ],
+    "issue_date_iso": "2026-08-01",
+    "expiry_date_iso": "2027-08-19",
+    "review_status": "approved",
+    "source_url": "https://www.msdvetmanual.com/cat-owners/immune-disorders-of-cats/disorders-involving-anaphylactic-reactions-type-i-reactions-atopy-in-cats"
+  },
+  {
+    "passage_id": "EDU-TOX-008",
+    "scenario_scope": [
+      "跨情境"
+    ],
+    "doc_id": "FDA-PET-MEDICATION-SAFETY",
+    "version": "online-2026.08.20",
+    "text": "藥物應存放在寵物無法取得之處，避免放在檯面、包包或床頭。分裝藥盒容易被咬破，掉落地面的藥錠也常被誤食；若懷疑寵物誤食藥物，應立即聯絡獸醫並提供藥名與劑量。",
+    "species_scope": [
+      "dog",
+      "cat"
+    ],
+    "issue_date_iso": "2026-08-01",
+    "expiry_date_iso": "2027-08-19",
+    "review_status": "approved",
+    "source_url": "https://www.fda.gov/animal-veterinary/animal-health-literacy/properly-store-medications-keep-your-pet-safe"
+  },
+  {
+    "passage_id": "EDU-TOX-009",
+    "scenario_scope": [
+      "跨情境"
+    ],
+    "doc_id": "FDA-PET-DANGEROUS-ITEMS",
+    "version": "online-2026.08.20",
+    "text": "線狀異物（如縫線、緞帶、髮圈）對貓特別危險，可能造成腸道摺疊與割傷；若看到線頭從口腔或肛門露出，切勿自行拉扯，應立即就醫。",
+    "species_scope": [
+      "dog",
+      "cat"
+    ],
+    "issue_date_iso": "2026-08-01",
+    "expiry_date_iso": "2027-08-19",
+    "review_status": "approved",
+    "source_url": "https://www.fda.gov/animal-veterinary/animal-health-literacy/potentially-dangerous-items-your-pet"
+  },
+  {
+    "passage_id": "EDU-POL-004",
+    "scenario_scope": [
+      "跨情境"
+    ],
+    "doc_id": "MSD-PET-EMERGENCY",
+    "version": "2025.12",
+    "text": "本助理提供的是一般性衛教資訊，不能取代獸醫師的診斷與處方。實際用藥、劑量與治療方式，應由診療過該動物的獸醫師決定。",
+    "species_scope": [
+      "dog",
+      "cat"
+    ],
+    "issue_date_iso": "2025-12-01",
+    "expiry_date_iso": "2027-08-19",
+    "review_status": "approved",
+    "source_url": "https://www.msdvetmanual.com/special-pet-topics/emergencies/what-to-do-in-a-dog-or-cat-emergency"
   }
 ]

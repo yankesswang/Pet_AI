@@ -516,28 +516,6 @@
 .split__note { font-size: var(--t-xs); opacity: 0.9; margin-left: auto; font-family: var(--font-mono); }
 .split__body { padding: var(--sp-4); display: flex; flex-direction: column; gap: var(--sp-3); }
 
-/* ---- 角色切換器 ---- */
-.roleswitch {
-  display: inline-flex;
-  border: 2px solid var(--c-border-strong);
-  border-radius: var(--r-md);
-  overflow: hidden;
-  background: var(--c-surface);
-}
-.roleswitch__btn {
-  padding: var(--sp-2) var(--sp-4);
-  min-height: 44px;
-  font-size: var(--t-sm); font-weight: var(--w-strong);
-  border-right: 1px solid var(--c-border);
-  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
-  display: inline-flex; align-items: center; gap: var(--sp-2);
-  color: var(--c-ink-2);
-}
-.roleswitch__btn:last-child { border-right: none; }
-.roleswitch__btn:hover { background: var(--c-surface-alt); }
-.roleswitch__btn[aria-pressed='true'] { background: var(--c-brand); color: #fff; }
-.roleswitch__btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
 /* ---- QR ---- */
 .qr {
   display: flex; flex-direction: column; align-items: center; gap: var(--sp-3);
@@ -873,13 +851,6 @@
   display: flex; align-items: center; gap: var(--sp-2);
   font-weight: var(--w-strong); font-size: var(--t-md); color: var(--c-ink);
   flex-wrap: wrap;
-}
-.live__count {
-  margin-left: auto;
-  font-size: var(--t-xs); font-weight: var(--w-strong);
-  color: var(--s-green); background: var(--s-green-bg);
-  border: 1px solid var(--s-green-soft);
-  padding: 2px var(--sp-2); border-radius: 999px;
 }
 
 /* 轉介 */

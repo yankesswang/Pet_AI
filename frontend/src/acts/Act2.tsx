@@ -407,7 +407,6 @@ export function Act2({ onNext }: { onNext: () => void }) {
                   <div className="card">
                     <div className="card__body stack gap-3">
                       <div className="muted">
-                        本次檢索共產生 {d.passport.claims.length} 項主張，全部比對到來源段落。
                         任一主張若找不到支持段落，依 VG-CLM-001 主張驗證器規則必須刪除或拒答。
                       </div>
                       {d.passport.claims.map((c) => (

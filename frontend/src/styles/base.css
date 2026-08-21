@@ -257,10 +257,6 @@ main { flex: 1; padding: var(--sp-10) 0 var(--sp-16); }
 .row--top { align-items: flex-start; }
 .row__end { margin-left: auto; }
 
-/* 角色切換列 */
-.rolebar { padding: var(--sp-3) 0; }
-.rolebar__scope { flex: 1; min-width: 260px; }
-
 /* 卡片內把某塊推到底部並以細線分隔（原本是 marginTop:auto 的內聯寫法） */
 .pushdown {
   margin-top: auto;

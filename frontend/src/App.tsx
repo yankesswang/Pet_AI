@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
-import type { Role } from './lib/types'
-import { GATE_ORDER, GATE_META, ROLE_META } from './lib/gateStates'
+import { GATE_ORDER, GATE_META } from './lib/gateStates'
 import { USE_MOCKS, getLastSource, health, type DataSource } from './lib/api'
 import { StateLegend, StateBadge } from './components/StateVisuals'
 import { Thesis, SectionTitle, Note } from './components/Common'
@@ -22,8 +21,6 @@ interface ViewDef {
   id: ViewId
   kicker: string
   label: string
-  /** 此頁的主要角色視角 — 用於角色切換器高亮 */
-  role: Role
   /**
    * 此頁一律直接打後端、沒有 mock 備援。
    * 頂欄的 MOCK/LIVE 標示反映的是「劇本頁用的是哪種資料」，
@@ -36,19 +33,19 @@ const VIEWS: ViewDef[] = [
   // 實際使用頁放在第一個：這是唯一一頁使用者可以真的自己提問的地方，
   // 其餘分頁都是為評審設計的固定劇本導覽。
   // kicker 只保留 label 沒說的資訊（此頁對應的閘門狀態），不重複幕次。
-  { id: 'live', kicker: 'LIVE', label: '我要提問｜真實提問與判定', role: 'owner', alwaysLive: true },
+  { id: 'live', kicker: 'LIVE', label: '我要提問｜真實提問與判定', alwaysLive: true },
   // 文件庫緊接在提問頁後面：看完回答的下一個問題就是「這些話是哪來的」。
-  { id: 'library', kicker: '', label: '文件庫｜來源全集', role: 'owner', alwaysLive: true },
+  { id: 'library', kicker: '', label: '文件庫｜來源全集', alwaysLive: true },
   // 驗證頁緊接在文件庫後面：看完「話從哪來」，下一個該問的是
   // 「這套判定在沒看過的說法上還準不準」。放在劇本頁之前，
   // 是因為它決定了後面那些劇本該用多大的力道解讀。
-  { id: 'validation', kicker: 'EVAL', label: '驗證結果｜留出測試集', role: 'owner', alwaysLive: true },
-  { id: 'overview', kicker: '', label: '四種狀態總覽', role: 'owner' },
-  { id: 'compare', kicker: '', label: '對照組｜A / B / C 三組同輸入', role: 'owner' },
-  { id: 'act1', kicker: 'RED', label: '第一幕｜系統拒絕用藥要求', role: 'owner' },
-  { id: 'amber', kicker: 'AMBER', label: '黃色｜資訊不足時的追問', role: 'owner' },
-  { id: 'act2', kicker: 'BLUE', label: '第二幕｜同案例、不同角色', role: 'vet' },
-  { id: 'act3', kicker: 'REPLAY', label: '第三幕｜仿單更新追回舊回答', role: 'admin' },
+  { id: 'validation', kicker: 'EVAL', label: '驗證結果｜留出測試集', alwaysLive: true },
+  { id: 'overview', kicker: '', label: '四種狀態總覽' },
+  { id: 'compare', kicker: '', label: '對照組｜A / B / C 三組同輸入' },
+  { id: 'act1', kicker: 'RED', label: '第一幕｜系統拒絕用藥要求' },
+  { id: 'amber', kicker: 'AMBER', label: '黃色｜資訊不足時的追問' },
+  { id: 'act2', kicker: 'BLUE', label: '第二幕｜同案例、不同角色' },
+  { id: 'act3', kicker: 'REPLAY', label: '第三幕｜仿單更新追回舊回答' },
 ]
 
 /**
@@ -119,11 +116,6 @@ export function App() {
 
       <main>
         <div className="shell stack gap-6">
-          <RoleSwitcher current={current.role} onPick={(r) => {
-            const target = VIEWS.find((v) => v.role === r && v.id !== 'overview')
-            if (target) go(target.id)
-          }} />
-
           {view === 'live' && <LiveAsk />}
           {view === 'library' && <Library />}
           {view === 'validation' && <Validation />}
@@ -171,30 +163,6 @@ function TopBar({ source, liveOnly }: { source: DataSource; liveOnly?: boolean }
         </div>
       </div>
     </header>
-  )
-}
-
-/* ---------------- 角色切換器 ---------------- */
-
-function RoleSwitcher({ current, onPick }: { current: Role; onPick: (r: Role) => void }) {
-  return (
-    <div className="row rolebar">
-      <span className="label">目前角色視角</span>
-      <div className="roleswitch" role="group" aria-label="角色切換">
-        {(Object.keys(ROLE_META) as Role[]).map((r) => (
-          <button
-            key={r}
-            type="button"
-            className="roleswitch__btn"
-            aria-pressed={current === r}
-            onClick={() => onPick(r)}
-          >
-            {ROLE_META[r].icon({ size: 17 })} {ROLE_META[r].label}
-          </button>
-        ))}
-      </div>
-      <span className="muted rolebar__scope">{ROLE_META[current].scope}</span>
-    </div>
   )
 }
 

@@ -369,12 +369,47 @@ def test_translator_refuses_unapproved_passage():
 
 
 def test_translator_rejects_hallucinated_content():
-    """模型憑空生出來源沒有的內容 → 涵蓋度不足 → 丟棄改寫，退回原文。"""
+    """模型憑空生出來源沒有的內容 → 來源內容全數流失 → 丟棄改寫，退回原文。"""
     fake = FakeClient(text_result="貓咪生病時要多喝水，記得每天餵食三次罐頭。")
     r = rewrite_passage(_passage(APPROVED_TEXT), client=fake, force=True)
     assert r["rewritten"] is False
-    assert "涵蓋度" in r["reason"]
+    assert "保留度" in r["reason"]
     assert r["text"] == APPROVED_TEXT
+
+
+def test_translator_rejects_safety_weakening():
+    """把「儘速就醫」淡化成模糊建議 → 安全語義流失 → 退回原文。
+
+    這是舊涵蓋度指標抓不到的一類：模型沒有加入任何新內容，
+    只是把強度改弱，詞彙比例仍然很高。
+    """
+    weakened = "尿道阻塞的貓咪可以先在家觀察看看，情況沒有好轉再說。"
+    fake = FakeClient(text_result=weakened)
+    r = rewrite_passage(_passage(APPROVED_TEXT), client=fake, force=True)
+    assert r["rewritten"] is False
+    assert r["text"] == APPROVED_TEXT
+
+
+def test_translator_rejects_new_numbers():
+    """改寫加入來源沒有的數字（劑量／次數）→ 退回原文。"""
+    # 保留原文幾乎所有內容，只多一個來源沒有的數字
+    tainted = APPROVED_TEXT + "每天補充 500 毫升的水分。"
+    fake = FakeClient(text_result=tainted)
+    r = rewrite_passage(_passage(APPROVED_TEXT), client=fake, force=True)
+    assert r["rewritten"] is False
+    assert r["text"] == APPROVED_TEXT
+
+
+def test_translator_accepts_synonym_safety_wording():
+    """「不得自行給予」→「不要自行給予」是合法同義改寫，不該被誤判為刪除安全內容。"""
+    paraphrased = (
+        "如果懷疑尿道阻塞，請在症狀出現後儘速就醫，黃金處置時間是六小時內。"
+        "飼主不要自行給予利尿劑、止痛藥或人用藥物，以免延誤導尿與靜脈輸液等必要處置。"
+    )
+    fake = FakeClient(text_result=paraphrased)
+    r = rewrite_passage(_passage(APPROVED_TEXT), client=fake, force=True)
+    assert r["rewritten"] is True
+    assert r["text"] == paraphrased
 
 
 def test_translator_rejects_policy_violation():

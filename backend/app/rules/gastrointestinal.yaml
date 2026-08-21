@@ -91,6 +91,8 @@ rules:
         question: 腹部是否明顯脹大且緊繃？
       - field: unproductive_retching
         question: 是否作嘔卻吐不出東西？
+      - field: body_size
+        question: 體型大約是？（大型深胸犬種風險顯著較高）
     red_flag_conditions:
       - all_of:
           - field: species

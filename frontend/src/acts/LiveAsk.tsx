@@ -46,7 +46,7 @@ interface FieldSpec {
 }
 
 const FIELD_SPECS: Record<string, FieldSpec> = {
-  body_weight_kg: { kind: 'number', unit: '公斤', placeholder: '例如 4.5', hint: '體重會影響安全評估範圍，請盡量填實際數字。' },
+  body_weight_kg: { kind: 'number', unit: '公斤', placeholder: '例如 4.5', hint: '體重僅用於合理性檢查與體型推導；本系統不提供劑量。' },
   duration_hours: { kind: 'number', unit: '小時', placeholder: '例如 24', hint: '從第一次注意到症狀算起，大約幾小時。' },
   temperature_c: { kind: 'number', unit: '°C', placeholder: '例如 38.5' },
   age_months: { kind: 'number', unit: '月', placeholder: '例如 36' },
@@ -55,6 +55,19 @@ const FIELD_SPECS: Record<string, FieldSpec> = {
   can_urinate: { kind: 'yesno', yes: '有尿出來', no: '尿不出來', hint: '完全尿不出來屬於急症紅旗，公貓可能數小時內危及生命。' },
   vomiting: { kind: 'yesno', yes: '有嘔吐', no: '沒有嘔吐' },
   can_keep_water: { kind: 'yesno', yes: '喝得下、留得住', no: '喝了就吐' },
+
+  // 體型是臨床風險分層依據（大型深胸犬的胃扭轉、小型犬的氣管塌陷），
+  // 值必須是後端 BodySize enum，中文僅為顯示。
+  body_size: {
+    kind: 'select',
+    hint: '體型會影響風險判斷：不同體型的好發疾病不同。',
+    options: [
+      { label: '小型犬（約 10 公斤以下）', value: 'small' },
+      { label: '中型犬（約 10–25 公斤）', value: 'medium' },
+      { label: '大型犬（約 25 公斤以上）', value: 'large' },
+      { label: '不確定', value: 'unknown' },
+    ],
+  },
 
   severity: {
     kind: 'select',
@@ -368,7 +381,7 @@ export function LiveAsk() {
 
       {/* ---- 對話區 ---- */}
       <div className="live__thread stack gap-5" aria-live="polite">
-        {empty && !loading && <EmptyState onPick={(t) => { setDraft(t); taRef.current?.focus() }} />}
+        {empty && !loading && <EmptyState onPick={(t) => { setDraft(''); void send(t, {}, false) }} />}
 
         {turns.map((t) =>
           t.kind === 'user' ? (
@@ -553,7 +566,7 @@ function EmptyState({ onPick }: { onPick: (t: string) => void }) {
  * ================================================================== */
 
 const FIELD_LABEL_ZH: Record<string, string> = {
-  species: '物種', body_weight_kg: '體重', age_months: '年齡', sex: '性別',
+  species: '物種', body_size: '體型', body_weight_kg: '體重', age_months: '年齡', sex: '性別',
   duration_hours: '持續時間', severity: '嚴重度', current_medications: '目前用藥',
   can_urinate: '可否排尿', vomiting: '是否嘔吐', mentation: '精神狀態',
   breathing_effort: '呼吸狀況', mucous_membrane_color: '黏膜顏色',
@@ -758,7 +771,6 @@ function AnswerCard({ data }: { data: ConsultResponse }) {
               <div className="live__section-head">
                 <IconCheck size={17} />
                 經審核的衛教與觀察事項
-                <span className="live__count">{verified.length} 項主張皆有來源</span>
               </div>
               <p className="muted">點任一項可展開支持它的原始段落、版本與有效期限。</p>
               <div className="stack gap-2">
@@ -865,7 +877,6 @@ function RetrievalTraceBlock({ trace }: { trace?: RetrievalTrace }) {
           檢索方式：{trace.method_zh}。
           本次判定情境為 <b>{trace.scenarios.join('、') || '未分類'}</b>
           {trace.species && `，物種 ${SPECIES_LABEL[trace.species as 'cat' | 'dog'] ?? trace.species}`}。
-          一次回答最多產生 {trace.claim_limit} 項主張。
         </p>
 
         <div>

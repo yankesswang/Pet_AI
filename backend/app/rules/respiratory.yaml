@@ -110,6 +110,42 @@ rules:
     owner_message: 疑似中暑，請立即移至陰涼處、以常溫水降溫並儘速送醫，勿使用冰水。
     regression_cases: [RES-RED-005]
 
+  - rule_id: VG-YEL-111
+    version: "1.0"
+    scenario: 呼吸
+    severity: yellow
+    title: 小型犬鵝鳴咳（疑似氣管塌陷）需補齊體型與誘發情境
+    species: [dog]
+    presentations: [鵝鳴咳, 咳嗽]
+    # 體型在這條規則裡是**判定依據**而非備註：氣管塌陷好發於小型犬，
+    # 同樣的「乾咳像鵝叫」在小型犬身上代表的急迫性與大型犬不同。
+    # 這與 VG-RED-203（胃扭轉好發於大型深胸犬）是一組對照。
+    required_questions:
+      - field: body_size
+        question: 體型大約是？（氣管塌陷好發於小型犬）
+      - field: duration_hours
+        question: 這樣的咳嗽持續多久了？
+      - field: breathing_effort
+        question: 休息時呼吸是否也覺得費力？
+    red_flag_conditions:
+      - all_of:
+          - field: species
+            op: eq
+            value: dog
+          - field: body_size
+            op: eq
+            value: small
+          - field: symptoms
+            op: contains_any
+            value: [鵝鳴咳]
+    system_action: ask_required_questions
+    allowed_outputs: [required_questions, interim_safety_notice]
+    forbidden_outputs: [product_recommendation, dosage, diagnosis, purchase_link]
+    owner_message: >-
+      小型犬出現鵝鳴般乾咳需留意氣管塌陷可能，請避免使用項圈改用胸背帶、
+      維持理想體重並避免高溫與激動；若出現呼吸費力或舌色改變請立即就醫。
+    regression_cases: [RES-YEL-002]
+
   - rule_id: VG-YEL-110
     version: "1.0"
     scenario: 呼吸

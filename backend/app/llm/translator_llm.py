@@ -17,18 +17,63 @@ Evidence Gate、效期閘門與角色政策的段落，改寫成飼主更好讀�
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List, Optional, Sequence
+import re
+from concurrent.futures import ThreadPoolExecutor
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from ..engine import policy
-from ..engine.claim_verifier import ClaimVerifier, coverage, get_verifier
+from ..engine.claim_verifier import ClaimVerifier, get_verifier, retention
 from ..models import Role, SourcePassage
 from .client import LLMClient, get_client, translation_enabled
 
 log = logging.getLogger("vetlink.llm.translator")
 
-# 改寫後仍須維持的最低詞彙涵蓋度。刻意高於主張驗證器預設門檻 (0.55)，
-# 因為「改寫」本來就該保留來源的內容詞，只調整語氣與句構。
-REWRITE_COVERAGE_THRESHOLD = 0.60
+# 改寫後仍須保留的最低來源內容比例。
+#
+# 這裡量的是 retention（原文還剩多少）而非 coverage（改寫有多少能對上原文）。
+# 用 coverage 會系統性誤殺合法改寫：內容詞是中文 2-gram，插入任何虛詞都會
+# 產生原文沒有的邊界 bigram，而「加上白話說明、把長句拆短」正是 SYSTEM_PROMPT
+# 要求的事。實測 24 段真實改寫，coverage>=0.60 只通過 9 段 (38%)，
+# 且被擋下的全是忠實且安全的改寫。
+#
+# 門檻 0.55：實測安全改寫的 retention 中位數約 0.74、最低 0.51；
+# 刪除安全指示的改寫則落在 0.13 以下，兩者分離明確。
+REWRITE_RETENTION_THRESHOLD = 0.55
+
+# 安全語義群：來源命中某一群時，改寫後必須仍命中同一群。
+# 用「群」而非單詞比對，才不會把「勿自行使用」→「不要自行使用」
+# 這種合法同義改寫誤判為刪除安全內容。
+SAFETY_GROUPS: Tuple[Tuple[str, ...], ...] = (
+    ("立即", "立刻", "馬上", "儘速", "盡速"),
+    ("就醫", "送醫", "就診", "看醫生", "急診", "獸醫"),
+    ("禁止", "不可", "不得", "勿", "不要", "避免"),
+    ("危及", "致命", "死亡", "風險", "危險"),
+    ("必須", "務必", "一定要", "需要"),
+)
+
+_NUMBER_RE = re.compile(r"\d+(?:\.\d+)?")
+
+
+def safety_preserved(rewritten: str, source: str) -> Tuple[bool, str]:
+    """來源命中的每個安全語義群，改寫後是否仍然命中同一群。
+
+    擋的是「不得刪除安全相關內容」與「不得改變語意強度」——
+    把「必須立即就醫」淡化成「也許可以找時間看看」會在這裡被擋下。
+    """
+    for group in SAFETY_GROUPS:
+        if any(k in source for k in group) and not any(k in rewritten for k in group):
+            return False, group[0]
+    return True, ""
+
+
+def no_new_numbers(rewritten: str, source: str) -> Tuple[bool, str]:
+    """改寫不得出現來源沒有的數字。
+
+    劑量、次數、時間窗都是數字。模型即使被禁止，仍可能「順手」補上
+    一個看似合理的數值；這一關讓任何新數字都無法通過。
+    """
+    added = set(_NUMBER_RE.findall(rewritten)) - set(_NUMBER_RE.findall(source))
+    return (not added), "、".join(sorted(added))
 
 SYSTEM_PROMPT = """你是動物醫療衛教內容的「語言轉譯者」。你會拿到一段**已經由獸醫審核通過**的繁體中文衛教文字。
 
@@ -115,16 +160,34 @@ def rewrite_passage(
         result["reason"] = "LLM 無回應或呼叫失敗，退回原文"
         return result
 
-    # --- 第一關：主張驗證器（涵蓋度）------------------------------------
-    cov = coverage(candidate, original)
-    if cov < REWRITE_COVERAGE_THRESHOLD:
+    # --- 第一關：來源內容保留度 ------------------------------------------
+    # 量的是「原文還剩多少」，不是「改寫有多少能對上原文」。
+    # 只有刪掉來源內容才會扣分；插入虛詞讓句子好讀不會。
+    ret = retention(candidate, original)
+    if ret < REWRITE_RETENTION_THRESHOLD:
         result["reason"] = (
-            f"改寫後詞彙涵蓋度 {cov:.2f} < 門檻 {REWRITE_COVERAGE_THRESHOLD}，"
-            "研判加入了來源未支持的內容，已丟棄改寫結果"
+            f"改寫後來源內容保留度 {ret:.2f} < 門檻 {REWRITE_RETENTION_THRESHOLD}，"
+            "研判刪除了來源內容，已丟棄改寫結果"
         )
         return result
 
-    # --- 第二關：角色政策文字掃描 ---------------------------------------
+    # --- 第二關：安全語義不得流失 ----------------------------------------
+    kept, lost_group = safety_preserved(candidate, original)
+    if not kept:
+        result["reason"] = (
+            f"改寫後遺失安全語義（「{lost_group}」一類的指示），已丟棄並退回原文"
+        )
+        return result
+
+    # --- 第三關：不得新增來源沒有的數字（劑量／次數／時間窗）-------------
+    clean, added = no_new_numbers(candidate, original)
+    if not clean:
+        result["reason"] = (
+            f"改寫加入了來源沒有的數字（{added}），已丟棄並退回原文"
+        )
+        return result
+
+    # --- 第四關：角色政策文字掃描 ---------------------------------------
     redacted, violations = policy.redact(role, candidate)
     if violations:
         result["reason"] = (
@@ -137,7 +200,9 @@ def rewrite_passage(
 
     result["text"] = redacted.strip()
     result["rewritten"] = True
-    result["reason"] = f"通過主張驗證（涵蓋度 {cov:.2f}）與角色政策掃描"
+    result["reason"] = (
+        f"通過來源保留度 {ret:.2f}、安全語義、數字與角色政策四道檢查"
+    )
     return result
 
 
@@ -149,12 +214,31 @@ def rewrite_passages(
     force: bool = False,
     limit: int = 4,
 ) -> List[Dict[str, Any]]:
-    """批次改寫。每一段獨立成敗，任何一段失敗只影響該段。"""
-    out: List[Dict[str, Any]] = []
+    """批次改寫。每一段獨立成敗，任何一段失敗只影響該段。
+
+    各段之間沒有任何相依（每段自己送 LLM、自己過涵蓋度與政策掃描），
+    因此改為並行送出。序列化時整體耗時是各段之和 —— 3 段就要 7～9 秒，
+    足以讓前端在使用者補完追問、狀態轉 GREEN 的那一刻逾時。
+
+    並行只改變「等待方式」，不改變任何一段的判定：輸出順序仍與輸入順序
+    一一對應，失敗仍逐段退回原文。
+    """
+    items = list(passages)[:limit]
+    if not items:
+        return []
     c = client or get_client()
-    for p in list(passages)[:limit]:
-        out.append(rewrite_passage(p, role=role, client=c, force=force))
-    return out
+
+    # 單段不值得起執行緒池，直接算完回傳。
+    if len(items) == 1:
+        return [rewrite_passage(items[0], role=role, client=c, force=force)]
+
+    with ThreadPoolExecutor(max_workers=len(items)) as pool:
+        futures = [
+            pool.submit(rewrite_passage, p, role=role, client=c, force=force)
+            for p in items
+        ]
+        # 依 futures 原順序取回，確保輸出與輸入段落一一對應。
+        return [f.result() for f in futures]
 
 
 def translation_status(results: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
@@ -165,7 +249,10 @@ def translation_status(results: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
         "total_passages": total,
         "rewritten_count": rewritten,
         "fallback_count": total - rewritten,
-        "note": "改寫僅作用於已核准段落；每段仍經主張驗證與角色政策掃描，失敗即退回原文。",
+        "note": (
+            "改寫僅作用於已核准段落；每段仍經來源保留度、安全語義、數字與"
+            "角色政策四道檢查，任一關失敗即退回原文。"
+        ),
     }
 
 
@@ -173,5 +260,7 @@ __all__ = [
     "rewrite_passage",
     "rewrite_passages",
     "translation_status",
-    "REWRITE_COVERAGE_THRESHOLD",
+    "REWRITE_RETENTION_THRESHOLD",
+    "safety_preserved",
+    "no_new_numbers",
 ]
