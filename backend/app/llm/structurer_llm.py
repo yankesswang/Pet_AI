@@ -27,7 +27,7 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field, ValidationError, field_validator
 
 from ..engine.structurer import SYMPTOM_LEXICON, structure_case
-from ..models import ConsultRequest, Mentation, Species
+from ..models import BodySize, ConsultRequest, Mentation, Species
 from .client import LLMClient, get_client, structuring_enabled
 
 log = logging.getLogger("vetlink.llm.structurer")
@@ -64,6 +64,7 @@ class LLMStructuredSymptoms(BaseModel):
     species: Optional[Species] = None
     symptoms: List[str] = Field(default_factory=list)
     body_weight_kg: Optional[float] = None
+    body_size: Optional[BodySize] = None
     age_months: Optional[int] = None
     sex: Optional[str] = None
     duration_hours: Optional[float] = None
@@ -133,7 +134,7 @@ SYSTEM_PROMPT = """你是動物用藥系統的「症狀結構化器」。你的�
 5. can_urinate：飼主明確表示排得出尿才填 true；明確表示尿不出來填 false；未提及填 null。
 6. 只輸出 JSON 物件，不要任何說明文字。
 
-輸出 JSON 欄位：species, symptoms, body_weight_kg, age_months, sex, duration_hours,
+輸出 JSON 欄位：species, symptoms, body_weight_kg, body_size, age_months, sex, duration_hours,
 mentation, can_urinate, vomiting, can_keep_water, temperature_c, human_drug_involved, toxin_exposure
 """
 
@@ -175,10 +176,11 @@ def merge_facts(
             )
 
     # 3) 純數值欄位：只在詞典缺值時補齊，不覆寫
-    for field in ("body_weight_kg", "age_months", "sex", "duration_hours", "temperature_c"):
+    for field in ("body_weight_kg", "body_size", "age_months", "sex", "duration_hours", "temperature_c"):
         val = getattr(llm, field, None)
         if val is not None and facts.get(field) is None:
-            facts[field] = val
+            # 規則引擎以字串比對列舉值（op: eq / in），存入 Enum 會比不中。
+            facts[field] = val.value if isinstance(val, BodySize) else val
             notes.append(f"LLM 補齊 {field}")
 
     # 4) 紅旗相關布林欄位：衝突時取較危險的值
@@ -296,7 +298,7 @@ def structure_case_llm(
     # 2) 明確給定的請求欄位永遠優先於任何抽取結果（含 LLM）
     #    這與 structure_case 的既有語意一致。
     for field in (
-        "species", "body_weight_kg", "age_months", "sex", "duration_hours",
+        "species", "body_weight_kg", "body_size", "age_months", "sex", "duration_hours",
         "severity", "can_urinate", "vomiting", "mentation",
         "temperature_c", "can_keep_water",
     ):

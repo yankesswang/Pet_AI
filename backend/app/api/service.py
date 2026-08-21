@@ -18,6 +18,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from ..engine import policy
+from ..engine.authz import SCOPE_PRODUCT_SEARCH, get_grant_store
 from ..engine.claim_verifier import make_claim
 from ..engine.knowledge import KnowledgeBase, get_kb
 from ..engine.passport import build_passport, new_audit_id
@@ -462,6 +463,7 @@ class ConsultService:
             "species": facts.get("species"),
             "symptoms": facts.get("symptoms") or [],
             "duration_hours": facts.get("duration_hours"),
+            "body_size": facts.get("body_size"),
             "body_weight_kg": facts.get("body_weight_kg"),
             "current_medications": facts.get("current_medications"),
             "gate_state": decision.state.value,
@@ -478,8 +480,25 @@ class ConsultService:
         *,
         role: Role,
         vet_verified: bool,
+        vet_ref: Optional[str] = None,
     ) -> Tuple[VetSearchResponse, bool]:
-        """回傳 (回應, 是否已授權)。未授權時回應僅含拒絕原因與空結果。"""
+        """回傳 (回應, 是否已授權)。未授權時回應僅含拒絕原因與空結果。
+
+        飼主授權一律由伺服器驗章決定，不接受呼叫端自我宣告 —— 見 `engine.authz`。
+        只有在存取個案資料 (case_audit_id) 時才需要飼主授權；不綁個案的
+        一般產品檢索只需獸醫身分驗證。
+        """
+        grant = None
+        owner_authorized = False
+        if req.case_audit_id:
+            grant = get_grant_store().verify(
+                req.grant_token,
+                case_audit_id=req.case_audit_id,
+                required_scope=SCOPE_PRODUCT_SEARCH,
+                vet_ref=vet_ref,
+            )
+            owner_authorized = grant.authorized
+
         species = req.species.value if req.species else None
         facts: Dict[str, Any] = {
             "species": species or "unknown",
@@ -493,7 +512,7 @@ class ConsultService:
             facts=facts,
             role=role,
             vet_verified=vet_verified,
-            owner_authorized=req.owner_authorized,
+            owner_authorized=owner_authorized,
             requested_mode="blue",
             requires_case_data=bool(req.case_audit_id),
             claims=[],

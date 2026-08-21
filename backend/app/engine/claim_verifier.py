@@ -55,6 +55,34 @@ def coverage(claim_text: str, passage_text: str) -> float:
     return hit / len(unique)
 
 
+def retention(rewritten_text: str, source_text: str) -> float:
+    """來源內容詞在改寫後仍保留的比例，0.0 ~ 1.0。
+
+    與 `coverage` 方向相反，用途也不同：
+
+    * `coverage(主張, 來源)` 問「這個主張有多少比例能在來源找到」——
+      用於**主張驗證**，分母是主張，加入來源沒有的內容會扣分。
+    * `retention(改寫, 原文)` 問「原文的內容有多少比例還在」——
+      用於**改寫檢查**，分母是原文，只有刪掉原文內容才會扣分。
+
+    為什麼改寫不能用 coverage：內容詞以中文 2-gram 表示，插入一個虛詞
+    （「是」→「都是」）就會產生「都是」這種原文不存在的邊界 bigram。
+    改寫本來就被要求「把長句拆短、加上白話說明」，必然插入虛詞，
+    於是 coverage 會系統性地懲罰它自己要求的行為 —— 實測 24 段真實改寫
+    有 15 段因此被丟棄，等於這個功能永遠付出 LLM 成本卻拿不到結果。
+
+    「加入了來源沒有的內容」這件事改由 `safety_preserved`（不得刪除安全
+    指示）、`no_new_numbers`（不得新增數字）與 `policy.redact`（劑量、
+    確診、購買等違規）三道確定性檢查負責，比詞彙比例更直接。
+    """
+    source_tokens = _content_tokens(source_text)
+    if not source_tokens:
+        return 0.0
+    unique = list(dict.fromkeys(source_tokens))
+    kept = sum(1 for t in unique if t in rewritten_text.lower() or t in rewritten_text)
+    return kept / len(unique)
+
+
 @dataclass
 class VerificationResult:
     bindings: List[ClaimBinding] = field(default_factory=list)
@@ -69,7 +97,12 @@ class VerificationResult:
 
     @property
     def citation_accuracy(self) -> float:
-        """已通過驗證的主張中，引用正確的比例 (提案 §12.1 主張引用正確率)。"""
+        """主張—段落綁定完整率：主張中確實綁定到有效來源的比例。
+
+        **不是臨床正確率。** 主張直接取自已審核段落原文，因此這個比率
+        在建構上幾乎必然接近 100%。它量的是「輸出不會出現沒有來源的內容」，
+        不是獸醫認定的語意正確。臨床有效性須由獸醫盲審取得。
+        """
         total = len(self.verified_claims) + len(self.deleted_claims)
         if total == 0:
             return 1.0

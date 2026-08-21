@@ -94,7 +94,9 @@ def test_impact_replay_recalls_affected_answers(client, admin_headers):
     assert entry["notified"] is True
 
     # 稽核事件已保存
-    events = client.get("/api/admin/impact-events").json()["events"]
+    events = client.get(
+        "/api/admin/impact-events", headers=admin_headers
+    ).json()["events"]
     assert any(e["affected_audit_id"] == audit_id for e in events)
 
 

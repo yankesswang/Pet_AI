@@ -34,7 +34,7 @@ from .rules import Rule, RuleEngine, RuleEvaluation, get_rule_engine
 # 資料資格：飼主端必要欄位 (提案 §四 黃色狀態)
 REQUIRED_OWNER_FIELDS: List[Tuple[str, str]] = [
     ("species", "這是貓還是狗？"),
-    ("body_weight_kg", "目前體重大約幾公斤？"),
+    ("body_size", "體型大約是？（小型犬約10公斤以下／中型犬10-25公斤／大型犬25公斤以上）"),
     ("duration_hours", "症狀持續多久了？"),
     ("severity", "嚴重程度如何（次數、是否影響精神與食慾）？"),
     ("current_medications", "目前有沒有正在使用的藥物或保健品？"),
@@ -80,7 +80,7 @@ _FIELD_ZH = {
     "breathing_effort": "呼吸費力程度", "mucous_membrane_color": "黏膜顏色",
     "human_drug_involved": "是否使用人用藥", "toxin_exposure": "是否接觸毒物",
     "can_urinate": "能否排尿", "duration_hours": "持續時間",
-    "body_weight_kg": "體重", "sex": "性別", "age_months": "年齡",
+    "body_size": "體型", "body_weight_kg": "體重", "sex": "性別", "age_months": "年齡",
     "severity": "嚴重度", "current_medications": "目前用藥",
 }
 
@@ -240,12 +240,44 @@ class EvidenceGate:
             result.notes.append("非飼主角色，不套用飼主端必要欄位檢查。")
             return result
 
+        # --- 理解資格 (fail-closed) ---------------------------------
+        # 留出集揭露的核心缺陷：詞典比對不到任何症狀時，系統會一路落到綠色，
+        # 把「我看不懂這句話」當成「這個案例沒有危險」。這兩件事完全不同。
+        #
+        # 因此只要飼主明確在描述身體狀況、但正規化後抽不出任何可判定的臨床
+        # 訊號，一律停在黃色追問，**絕不直接給綠色衛教**。寧可多問一次，
+        # 也不要對看不懂的急症說「在家觀察就好」。
+        comprehension = self._check_comprehension(facts)
+        if comprehension:
+            result.passed = False
+            result.refusal_reason = RefusalReason.INSUFFICIENT_INFO
+            result.notes.append(comprehension)
+            result.missing_fields = list(
+                dict.fromkeys(result.missing_fields + ["symptoms"])
+            )
+            result.required_questions = result.required_questions + [
+                {
+                    "field": "symptoms",
+                    "question": (
+                        "可以更具體描述目前的狀況嗎？例如：呼吸、排尿排便、"
+                        "嘔吐、精神食慾，以及是什麼時候開始的。"
+                    ),
+                }
+            ]
+
         missing: List[str] = []
+        species_val = facts.get("species")
         for field_name, question in REQUIRED_OWNER_FIELDS:
             value = facts.get(field_name)
             if field_name == "species" and value in (None, "unknown", Species.UNKNOWN.value):
                 missing.append(field_name)
-            elif value is None or value == "":
+                continue
+            # 體型分級只適用於犬。對貓追問「小型犬還是大型犬」不僅無意義，
+            # 還會讓貓的案例永遠補不齊必要欄位而卡在黃色。
+            # 物種未知時也不問 —— 先問出物種，下一輪才知道該不該問體型。
+            if field_name == "body_size" and species_val != Species.DOG.value:
+                continue
+            if value is None or value == "":
                 missing.append(field_name)
 
         if missing:
@@ -272,6 +304,56 @@ class EvidenceGate:
                 result.rules_failed.append(_rule_ref(ev))
 
         return result
+
+    # 表示「我家動物現在有狀況」的訊號。純衛教提問（「想知道中暑前兆」）
+    # 不含這些詞，因此不會被 fail-closed 攔下來 —— 那類問題本來就該給綠色。
+    _COMPLAINT_CUES = (
+        "怪怪", "不舒服", "不對勁", "生病", "怎麼辦", "怎麼半", "怎辦",
+        "看起來", "好像", "一直", "突然", "剛剛", "現在", "今天", "昨天",
+        "從半夜", "從早上", "越來越", "有點", "很痛", "在痛", "沒精神",
+        "不吃", "不喝", "沒食慾", "救", "急",
+    )
+
+    @classmethod
+    def _check_comprehension(cls, facts: Dict[str, Any]) -> str:
+        """fail-closed：抽不出臨床訊號但明顯在求助 → 回傳原因字串。
+
+        回傳空字串代表理解資格通過。
+        """
+        if facts.get("symptoms"):
+            return ""
+        # 這些欄位任一有值，代表仍有可判定的臨床訊號，不算「看不懂」。
+        #
+        # 刻意**不含** severity：那是飼主自評的嚴重度，不是臨床徵象。
+        # 「貓咪不舒服」配上 severity=mild 仍然沒有說出哪裡不對勁，
+        # 拿它當作理解成立會讓 fail-closed 形同虛設。
+        for key in (
+            "toxin_exposure", "human_drug_involved", "can_urinate", "vomiting",
+            "mentation", "breathing_effort", "mucous_membrane_color",
+            "temperature_c", "vomit_count_24h", "can_keep_water",
+        ):
+            if facts.get(key) not in (None, "", "unknown"):
+                return ""
+        # 政策意圖（索取劑量／購買／確診…）由角色資格處理，不在此攔截。
+        if facts.get("intent") not in (None, "", "general"):
+            return ""
+
+        raw = (facts.get("normalized_text") or facts.get("raw_text") or "").strip()
+        if not raw:
+            return "未取得任何描述，無法判定安全性。"
+
+        filtered = facts.get("symptoms_by_assertion") or {}
+        if any(k != "present" for k in filtered):
+            # 命中了症狀但全部落在否定／過去／假設／第三方語境。
+            # 這是**有意義的判定**（例如衛教提問），不是看不懂，放行。
+            return ""
+
+        if any(cue in raw for cue in cls._COMPLAINT_CUES):
+            return (
+                "描述中提到身體狀況，但系統無法從中辨識出可判定的臨床徵象；"
+                "依 fail-closed 原則不提供衛教結論，改為追問。"
+            )
+        return ""
 
     @staticmethod
     def _detect_contradictions(facts: Dict[str, Any]) -> List[str]:
@@ -506,6 +588,28 @@ class EvidenceGate:
             # 政策攔截：飼主索取劑量/購買/確診 → 仍以綠色狀態提供合規說明與轉介，
             # 但禁止輸出型別已被白名單擋掉；角色升級失敗 → 維持飼主可見範圍。
             state = GateState.GREEN if ctx.role == Role.OWNER else GateState.YELLOW
+
+            # 但若規則自己宣告的動作就是「先追問」（例如 VG-POL-431 物種未指明），
+            # 綠色會與規則意圖直接矛盾 —— 規則只允許輸出 required_questions，
+            # 系統卻回一則衛教結論。這類規則一律走黃色追問。
+            asking_rules = [
+                r for r in fired_rules
+                if getattr(r, "system_action", "") == "ask_required_questions"
+            ]
+            required_questions: List[Dict[str, str]] = []
+            if asking_rules:
+                state = GateState.YELLOW
+                seen: set[str] = set()
+                for r in asking_rules:
+                    for q in (getattr(r, "required_questions", None) or []):
+                        field_name = q.get("field") if isinstance(q, dict) else None
+                        question = q.get("question") if isinstance(q, dict) else None
+                        if question and field_name not in seen:
+                            seen.add(field_name)
+                            required_questions.append(
+                                {"field": field_name or "", "question": question}
+                            )
+
             decision = GateDecision(
                 state=state,
                 checks=checks,
@@ -515,6 +619,7 @@ class EvidenceGate:
                     or "輸出內容不符合目前角色權限。"
                 ),
                 fired_rules=fired_rules,
+                required_questions=required_questions,
                 product_retrieval_halted=True,
             )
             self._apply_policy(decision, ctx, fired_rules)
@@ -647,6 +752,8 @@ class EvidenceGate:
             scope["age_months"] = ctx.facts["age_months"]
         if ctx.facts.get("body_weight_kg") is not None:
             scope["body_weight_kg"] = ctx.facts["body_weight_kg"]
+        if ctx.facts.get("body_size") is not None:
+            scope["body_size"] = ctx.facts["body_size"]
         if fired_rules:
             scope["rule_species_scope"] = sorted(
                 {s for r in fired_rules for s in r.species}

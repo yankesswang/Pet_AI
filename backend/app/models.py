@@ -49,6 +49,24 @@ class Species(str, Enum):
     UNKNOWN = "unknown"
 
 
+class BodySize(str, Enum):
+    """犬體型分級 (提案 §5.1)。
+
+    體型是**臨床風險分層**的依據，與體重公斤數用途不同：
+    公斤數是算劑量用的，但本系統依政策層規定不輸出劑量，
+    因此公斤數本身無法改變任何判定；真正影響風險的是體型 ——
+    胃扭轉好發於大型深胸犬種、氣管塌陷好發於小型犬，
+    同樣的主訴在不同體型上代表不同的急迫性。
+
+    貓的體型差異在臨床上遠不如犬顯著，故本欄位僅適用於犬。
+    """
+
+    SMALL = "small"      # 小型犬，約 10 公斤以下
+    MEDIUM = "medium"    # 中型犬，約 10–25 公斤
+    LARGE = "large"      # 大型犬，約 25 公斤以上
+    UNKNOWN = "unknown"
+
+
 class Mentation(str, Enum):
     NORMAL = "normal"
     LETHARGIC = "lethargic"
@@ -109,6 +127,9 @@ class ConsultRequest(BaseModel):
     text: str = Field(default="", description="飼主自然語言描述")
     role: Role = Role.OWNER
     species: Optional[Species] = None
+    # 體型：臨床風險分層用（小／中／大型犬）。未提供時由體重推導。
+    body_size: Optional[BodySize] = None
+    # 體重：僅作合理性檢查與體型推導；本系統不輸出劑量，故不再列為必答。
     body_weight_kg: Optional[float] = None
     age_months: Optional[int] = None
     sex: Optional[str] = None
@@ -135,9 +156,21 @@ class VetSearchRequest(BaseModel):
     indication: Optional[str] = None
     ingredient: Optional[str] = None
     dosage_form: Optional[str] = None
-    owner_authorized: bool = True
     case_audit_id: Optional[str] = None
     limit: int = 10
+
+    # 飼主授權**不接受呼叫端自我宣告**。
+    #
+    # 這個欄位原本是 `owner_authorized: bool = True`，也就是預設已授權，
+    # 而且由 request body 傳入 —— 任何呼叫端都能自稱「飼主已授權」。
+    # 那是流程示意，不是可驗證的授權鏈。
+    #
+    # 現在改為提交一張由伺服器簽章、有時效、綁定個案的授權憑證 (grant)。
+    # 授權與否一律由伺服器驗章後決定，見 `app.engine.authz`。
+    grant_token: Optional[str] = Field(
+        default=None,
+        description="飼主授權憑證（QR Code 內容）。缺少或驗證失敗即視為未授權。",
+    )
 
 
 # --------------------------------------------------------------------------

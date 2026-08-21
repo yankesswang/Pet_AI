@@ -15,6 +15,12 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, Body, Header, HTTPException, Query
 from pydantic import BaseModel, Field
 
+from ..engine.authz import (
+    SCOPE_CASE_READ,
+    SCOPE_PRODUCT_SEARCH,
+    VALID_SCOPES,
+    get_grant_store,
+)
 from ..engine.impact_replay import get_impact_engine
 from ..engine.knowledge import get_kb
 from ..engine.passport import audit_completeness, is_audit_complete
@@ -40,6 +46,12 @@ router = APIRouter(prefix="/api")
 # --------------------------------------------------------------------------
 VET_TOKEN = os.environ.get("VETLINK_VET_TOKEN", "demo-vet-token")
 ADMIN_TOKEN = os.environ.get("VETLINK_ADMIN_TOKEN", "demo-admin-token")
+
+# Demo 展示用：允許不帶憑證直接開啟回答護照連結。
+# 預設關閉 —— 護照含健康資訊，公開查閱必須是明確的選擇而非預設值。
+_PUBLIC_PASSPORT = (os.environ.get("VETLINK_PUBLIC_PASSPORT") or "").strip().lower() in (
+    "1", "true", "on", "yes",
+)
 
 
 def _normalize_token(raw: Optional[str]) -> Optional[str]:
@@ -197,12 +209,25 @@ def knowledge(
         "records": [],
     }
     if vet_unlocked:
-        valid, expired = kb.search_products(query=q, species=species, limit=limit)
+        valid, gated = kb.search_products(query=q, species=species, limit=limit)
+        # 效期三態分開標示：「已過期」與「效期不明」是不同的排除理由，
+        # 前者確定失效，後者是待人工確認。混為一談會讓審核者無從分辨。
         products["records"] = [
-            {**p.model_dump(mode="json"), "gate_zh": "通過效期閘門"} for p in valid
+            {**p.model_dump(mode="json"), "gate_zh": "通過效期閘門", "expiry_state": "valid"}
+            for p in valid
         ] + [
-            {**p.model_dump(mode="json"), "gate_zh": "已逾效期，藍色模式仍標示但不得引用"}
-            for p in expired[:limit]
+            {
+                **p.model_dump(mode="json"),
+                "gate_zh": (
+                    "效期不明，隔離待人工確認，不得支持產品主張"
+                    if getattr(p, "expiry_unknown", False)
+                    else "已逾效期，藍色模式仍標示但不得引用"
+                ),
+                "expiry_state": (
+                    "unknown" if getattr(p, "expiry_unknown", False) else "expired"
+                ),
+            }
+            for p in gated[:limit]
         ]
         products["note_zh"] = "已通過獸醫身分驗證，顯示核准適應症與成分。"
     else:
@@ -269,7 +294,10 @@ def consult(
     req: ConsultRequest,
     x_vet_token: Optional[str] = Header(default=None, alias="X-Vet-Token"),
     authorization: Optional[str] = Header(default=None),
-    owner_authorized: bool = Query(default=False, description="飼主是否已授權獸醫存取個案"),
+    grant_token: Optional[str] = Query(
+        default=None,
+        description="飼主授權憑證（QR Code 內容）。缺少或驗證失敗即視為未授權。",
+    ),
     requested_mode: Optional[str] = Query(default=None, description="要求解鎖的模式，如 blue"),
 ) -> ConsultResponse:
     # 角色升級必須靠 token，不能靠請求 body 自稱
@@ -293,6 +321,16 @@ def consult(
             },
         )
 
+    # 飼主授權一律驗章決定，不接受呼叫端以參數自我宣告。
+    owner_authorized = False
+    if grant_token and requested_mode == "blue":
+        owner_authorized = get_grant_store().verify(
+            grant_token,
+            case_audit_id=None,
+            required_scope=SCOPE_CASE_READ,
+            consume=False,
+        ).authorized
+
     service = get_service()
     response = service.consult(
         effective_req,
@@ -307,6 +345,78 @@ def consult(
         response_payload=response.model_dump(mode="json"),
     )
     return response
+
+
+# --------------------------------------------------------------------------
+# 飼主授權憑證 (QR Code 授權鏈)
+# --------------------------------------------------------------------------
+class GrantIssueRequest(BaseModel):
+    """飼主簽發授權給特定獸醫存取特定個案。"""
+
+    case_audit_id: str = Field(description="被授權存取的個案稽核編號")
+    owner_ref: str = Field(default="owner", description="飼主識別")
+    vet_ref: Optional[str] = Field(default=None, description="被授權的獸醫識別")
+    scopes: List[str] = Field(
+        default_factory=lambda: [SCOPE_CASE_READ],
+        description=f"授權範圍，可選 {sorted(VALID_SCOPES)}",
+    )
+    ttl_seconds: int = Field(default=900, description="有效期秒數")
+
+
+@router.post("/authz/grants")
+def issue_grant(req: GrantIssueRequest) -> Dict[str, Any]:
+    """簽發一張有時效、一次性、綁定個案的授權憑證。
+
+    回傳的 `grant_token` 就是 QR Code 的內容 —— 授權由伺服器簽章，
+    不再是呼叫端自我宣告的布林值。
+    """
+    try:
+        token = get_grant_store().issue(
+            case_audit_id=req.case_audit_id,
+            owner_ref=req.owner_ref,
+            vet_ref=req.vet_ref or "",
+            scopes=req.scopes,
+            ttl_seconds=req.ttl_seconds,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return {
+        "grant_token": token,
+        "case_audit_id": req.case_audit_id,
+        "scopes": sorted(set(req.scopes)),
+        "ttl_seconds": req.ttl_seconds,
+        "note_zh": (
+            "此憑證有時效且僅能使用一次，並綁定個案與授權範圍；"
+            "飼主可隨時撤回。"
+        ),
+    }
+
+
+@router.delete("/authz/grants/{grant_id}")
+def revoke_grant(grant_id: str) -> Dict[str, Any]:
+    """飼主撤回授權，撤回後立即失效。"""
+    revoked = get_grant_store().revoke(grant_id)
+    return {
+        "grant_id": grant_id,
+        "revoked": revoked,
+        "note_zh": "授權已撤回。" if revoked else "此授權先前已撤回。",
+    }
+
+
+@router.get("/authz/grants/usage")
+def grant_usage(
+    case_audit_id: Optional[str] = Query(default=None),
+    x_vet_token: Optional[str] = Header(default=None, alias="X-Vet-Token"),
+    authorization: Optional[str] = Header(default=None),
+) -> Dict[str, Any]:
+    """授權使用紀錄，供稽核回查。限管理者。"""
+    role = _verify_vet(x_vet_token, authorization)
+    if role != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail={"error": "admin_required", "message": "授權使用紀錄限管理者查閱。"},
+        )
+    return {"records": get_grant_store().usage_log(case_audit_id)}
 
 
 # --------------------------------------------------------------------------
@@ -364,7 +474,47 @@ def vet_search(
 # 回答護照回查
 # --------------------------------------------------------------------------
 @router.get("/passport/{audit_id}")
-def get_passport(audit_id: str) -> Dict[str, Any]:
+def get_passport(
+    audit_id: str,
+    grant_token: Optional[str] = Query(
+        default=None, description="個案分享授權憑證（飼主簽發）"
+    ),
+    x_vet_token: Optional[str] = Header(default=None, alias="X-Vet-Token"),
+    authorization: Optional[str] = Header(default=None),
+) -> Dict[str, Any]:
+    """回答護照可能含健康資訊，不得無條件公開。
+
+    三條合法路徑，缺一不可：管理者、持有該個案授權憑證者，或
+    （Demo 便利）明確開啟公開模式的環境。預設一律拒絕。
+    """
+    allowed = False
+    if x_vet_token or authorization:
+        try:
+            allowed = _verify_vet(x_vet_token, authorization) == "admin"
+        except HTTPException:
+            allowed = False
+    if not allowed and grant_token:
+        allowed = get_grant_store().verify(
+            grant_token,
+            case_audit_id=audit_id,
+            required_scope=SCOPE_CASE_READ,
+            consume=False,
+        ).authorized
+    if not allowed and _PUBLIC_PASSPORT:
+        allowed = True
+    if not allowed:
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "error": "case_authorization_required",
+                "message": (
+                    "回答護照含個案健康資訊，需管理者身分或飼主簽發的"
+                    "個案授權憑證才能查閱。"
+                ),
+                "rule_id": "VG-ROL-451",
+            },
+        )
+
     passport = get_store().get_passport(audit_id)
     if passport is None:
         raise HTTPException(
@@ -382,7 +532,18 @@ def get_passport(audit_id: str) -> Dict[str, Any]:
 
 
 @router.get("/answers")
-def list_answers(limit: int = Query(default=50, ge=1, le=500)) -> Dict[str, Any]:
+def list_answers(
+    limit: int = Query(default=50, ge=1, le=500),
+    x_vet_token: Optional[str] = Header(default=None, alias="X-Vet-Token"),
+    authorization: Optional[str] = Header(default=None),
+) -> Dict[str, Any]:
+    """歷次回答清單跨個案，含健康資訊，限管理者。"""
+    role = _verify_vet(x_vet_token, authorization)
+    if role != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail={"error": "admin_required", "message": "回答紀錄清單限管理者查閱。"},
+        )
     return {"answers": get_store().list_answers(limit=limit)}
 
 
@@ -446,7 +607,18 @@ def impact_replay(
 
 
 @router.get("/admin/impact-events")
-def impact_events(limit: int = Query(default=100, ge=1, le=500)) -> Dict[str, Any]:
+def impact_events(
+    limit: int = Query(default=100, ge=1, le=500),
+    x_vet_token: Optional[str] = Header(default=None, alias="X-Vet-Token"),
+    authorization: Optional[str] = Header(default=None),
+) -> Dict[str, Any]:
+    """變更影響事件屬管理端治理資料，限管理者。"""
+    role = _verify_vet(x_vet_token, authorization)
+    if role != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail={"error": "admin_required", "message": "變更影響事件限管理者查閱。"},
+        )
     return {"events": get_store().list_impact_events(limit=limit)}
 
 

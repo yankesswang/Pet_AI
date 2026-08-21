@@ -284,3 +284,52 @@ def test_species_unknown_products_never_match_a_species_filter():
     # 不指定物種時仍檢索得到，不是把資料藏起來
     all_valid, _ = kb.search_products(limit=500)
     assert any(not p.species for p in all_valid)
+
+
+# --------------------------------------------------------------------------
+# 效期三態：VALID / EXPIRED / UNKNOWN
+# --------------------------------------------------------------------------
+def test_expiry_unknown_is_not_treated_as_valid():
+    """「不知道是否有效」不得等於「有效」。
+
+    原本 search_products 只分過期／非過期，效期不明的產品會混進有效集合
+    去支持產品主張。以目前母體來說非過期的 150 筆中有 66 筆效期不明。
+    """
+    from app.engine.knowledge import get_kb
+
+    kb = get_kb()
+    valid, gated = kb.search_products(query="", limit=1000)
+    assert valid, "有效集合不應為空"
+    assert not any(getattr(p, "expiry_unknown", False) for p in valid), (
+        "效期不明的產品不得進入可支持主張的有效集合"
+    )
+    assert any(getattr(p, "expiry_unknown", False) for p in gated), (
+        "效期不明的產品應出現在被閘門排除的清單，供人工確認"
+    )
+
+
+def test_expiry_unknown_can_be_listed_explicitly_but_stays_separate():
+    """管理端可明確要求列出待確認清單，但預設不放行。"""
+    from app.engine.knowledge import get_kb
+
+    kb = get_kb()
+    default_valid, _ = kb.search_products(query="", limit=1000)
+    with_unknown, _ = kb.search_products(
+        query="", limit=1000, include_expiry_unknown=True
+    )
+    assert len(with_unknown) > len(default_valid), (
+        "明確要求時才會納入效期不明的產品"
+    )
+
+
+def test_expired_and_unknown_are_labelled_differently():
+    """兩種排除理由必須可分辨 —— 確定失效 vs 待人工確認。"""
+    from app.engine.knowledge import get_kb
+
+    kb = get_kb()
+    _, gated = kb.search_products(query="", limit=1000)
+    states = {
+        "unknown" if getattr(p, "expiry_unknown", False) else "expired"
+        for p in gated
+    }
+    assert states == {"unknown", "expired"}

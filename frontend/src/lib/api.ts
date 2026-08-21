@@ -78,7 +78,18 @@ export class ConsultError extends Error {
   }
 }
 
-const REQUEST_TIMEOUT_MS = 6000
+/**
+ * 逾時上限。
+ *
+ * 這個值必須大於**後端最慢的成功路徑**，否則會把「後端正在正常工作」
+ * 誤報成「後端沒有回應」—— 那和拿罐頭答案冒充判定一樣，是在騙使用者，
+ * 只是騙的是失敗原因。
+ *
+ * 後端 /api/consult 每次請求含兩處 LLM（提案 §7.1）：症狀結構化 1 次，
+ * 衛教語言轉譯每段 1 次。補齊資訊轉 GREEN 後要轉譯 3 段，實測 7.8–9.8 秒，
+ * 原本的 6000ms 因此「補完追問重送」必定逾時。
+ */
+const REQUEST_TIMEOUT_MS = 30000
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const ctrl = new AbortController()
@@ -367,11 +378,21 @@ export function vetSearch(payload: { query_zh: string; auth_token: string; case_
   )
 }
 
-/** GET /api/passport/{audit_id} */
-export function getPassport(auditId: string): Promise<AnswerPassport> {
-  const mock =
-    auditId === ACT2_VET_SEARCH.passport.audit_id ? ACT2_VET_SEARCH.passport : ACT1_CONSULT.passport
-  return withFallback(() => request<AnswerPassport>(`/api/passport/${auditId}`), mock)
+/**
+ * GET /api/passport/{audit_id}
+ *
+ * 回答護照含個案健康資訊，後端要求管理者身分或飼主簽發的個案授權憑證。
+ * 未授權時後端回 403 —— 此處**不做 mock fallback**：把「無權查看」
+ * 靜默換成一份預錄護照，會讓畫面看起來像成功取得真實資料。
+ */
+export function getPassport(
+  auditId: string,
+  opts: { grantToken?: string; authToken?: string } = {},
+): Promise<AnswerPassport> {
+  const query = opts.grantToken ? `?grant_token=${encodeURIComponent(opts.grantToken)}` : ''
+  return request<AnswerPassport>(`/api/passport/${auditId}${query}`, {
+    headers: opts.authToken ? { 'X-Vet-Token': opts.authToken } : undefined,
+  })
 }
 
 /** POST /api/admin/impact-replay */
@@ -463,6 +484,8 @@ export async function health(): Promise<{ ok: boolean }> {
 /** 送給 /api/consult 的結構化欄位（皆為選填，未填即不送出） */
 export interface ConsultFields {
   species?: 'cat' | 'dog'
+  /** 犬體型分級：臨床風險分層用。貓不適用。 */
+  body_size?: 'small' | 'medium' | 'large' | 'unknown'
   body_weight_kg?: number
   age_months?: number
   sex?: string

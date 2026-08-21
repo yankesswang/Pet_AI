@@ -243,7 +243,7 @@ def test_vet_search_requires_owner_authorization_for_case_data(client, vet_heade
 # --------------------------------------------------------------------------
 
 
-def test_blue_vet_unlock_returns_products_with_evidence(client, vet_headers):
+def test_blue_vet_unlock_returns_products_with_evidence(client, vet_headers, admin_headers):
     r = client.post(
         "/api/vet/search",
         json={"query": "犬", "species": "dog", "limit": 5},
@@ -262,7 +262,9 @@ def test_blue_vet_unlock_returns_products_with_evidence(client, vet_headers):
         assert b["passages"], "產品主張必須綁定許可證來源段落"
 
     # 護照必要欄位齊全
-    p = client.get(f"/api/passport/{d['audit_id']}").json()
+    p = client.get(
+        f"/api/passport/{d['audit_id']}", headers=admin_headers
+    ).json()
     assert p["is_audit_complete"] is True
 
 
@@ -277,8 +279,38 @@ def test_vet_search_without_species_is_blocked(client, vet_headers):
     assert "VG-POL-431" in r.json()["detail"]["message"]
 
 
-def test_passport_lookup_404(client):
-    assert client.get("/api/passport/VL-DOES-NOT-EXIST").status_code == 404
+def test_passport_lookup_404(client, admin_headers):
+    assert client.get(
+        "/api/passport/VL-DOES-NOT-EXIST", headers=admin_headers
+    ).status_code == 404
+
+
+def test_passport_requires_authorization(client):
+    """回答護照含個案健康資訊，未授權者不得查閱。"""
+    r = client.post("/api/consult", json={"text": "我想知道狗狗中暑的前兆", "species": "dog"})
+    audit_id = r.json()["audit_id"]
+
+    assert client.get(f"/api/passport/{audit_id}").status_code == 403
+
+    # 飼主簽發的個案授權憑證可以打開，且僅限該個案
+    grant = client.post(
+        "/api/authz/grants",
+        json={"case_audit_id": audit_id, "scopes": ["case:read"]},
+    ).json()["grant_token"]
+    assert client.get(
+        f"/api/passport/{audit_id}?grant_token={grant}"
+    ).status_code == 200
+    assert client.get(
+        f"/api/passport/VL-OTHER-CASE?grant_token={grant}"
+    ).status_code == 403
+
+
+def test_answer_list_and_impact_events_are_admin_only(client, vet_headers, admin_headers):
+    """跨個案的回答清單與治理事件不得對外開放。"""
+    for path in ("/api/answers", "/api/admin/impact-events"):
+        assert client.get(path).status_code == 403, path
+        assert client.get(path, headers=vet_headers).status_code == 403, path
+        assert client.get(path, headers=admin_headers).status_code == 200, path
 
 
 # --------------------------------------------------------------------------
@@ -313,9 +345,10 @@ def test_knowledge_library_exposes_education_passages(client):
     for field in ("passage_id", "doc_id", "version", "text",
                   "scenario_scope", "expiry_date_iso", "review_status"):
         assert field in first
-    assert edu["total"] == 47
-    assert edu["online_total"] == 33
-    assert edu["internal_total"] == 14
+    # 線上／內部兩類必須涵蓋全部段落，且都不得為空 —— 用相對關係表達，
+    # 才不會每次擴充文件庫都要回來改魔術數字。
+    assert edu["online_total"] + edu["internal_total"] == edu["total"]
+    assert edu["online_total"] > 0 and edu["internal_total"] > 0
     assert len(edu["by_source_org"]) >= 4
     assert len(edu["online_by_source_org"]) == 4
     expanded = [p for p in edu["passages"] if p["passage_id"] == "EDU-GI-003"]

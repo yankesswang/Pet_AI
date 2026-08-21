@@ -1,6 +1,10 @@
 {
   "name": "vetlink-ai-frontend",
   "private": true,
+  "engines": {
+    "node": ">=20 <21",
+    "npm": ">=10"
+  },
   "version": "1.0.0",
   "type": "module",
   "description": "VetLink AI | Evidence Gate 寵藥安心閘門 — 2026 中化智匯盃 競賽 Demo 前端",

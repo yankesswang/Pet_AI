@@ -644,8 +644,23 @@ class KnowledgeBase:
         ingredient: Optional[str] = None,
         dosage_form: Optional[str] = None,
         limit: int = 10,
+        include_expiry_unknown: bool = False,
     ) -> tuple:
-        """回傳 (有效產品清單, 被效期閘門排除的產品清單)。"""
+        """回傳 (有效產品清單, 被效期閘門排除的產品清單)。
+
+        效期為三態，不是二態：
+
+          VALID    有效期日期且未過期 —— 可作為產品主張的證據
+          EXPIRED  有效期日期且已過期 —— 禁止引用
+          UNKNOWN  查無有效期日期     —— 隔離待人工確認，**不得支持產品主張**
+
+        原本的實作只分「過期／非過期」，`expiry_unknown` 雖然算得出來卻不影響
+        任何判定，等於把「不知道還有沒有效」當成「有效」。以目前的示範母體來說
+        這不是邊角案例：非過期的 150 筆裡有 66 筆（44%）其實是效期不明。
+
+        對 Evidence Gate 而言「不知道」與「有效」必須分開。因此預設把 UNKNOWN
+        一併排除，並在第二個回傳值中標明排除原因，讓稽核軌跡看得出差別。
+        """
         candidates: List[ProductCard] = []
         for p in self.products:
             # 指定物種時，**核准物種不明的產品一律排除**。
@@ -672,8 +687,19 @@ class KnowledgeBase:
             candidates.append(p)
 
         expired = [p for p in candidates if p.is_expired]
-        valid = [p for p in candidates if not p.is_expired]
-        return valid[:limit], expired
+        unknown = [
+            p for p in candidates
+            if not p.is_expired and getattr(p, "expiry_unknown", False)
+        ]
+        valid = [
+            p for p in candidates
+            if not p.is_expired and not getattr(p, "expiry_unknown", False)
+        ]
+        if include_expiry_unknown:
+            # 明確要求時才放行（例如管理端要盤點待確認清單），
+            # 且仍與 VALID 分開回報，不混為一談。
+            return (valid + unknown)[:limit], expired
+        return valid[:limit], expired + unknown
 
 
 def _tokenize(text: str) -> List[str]:
